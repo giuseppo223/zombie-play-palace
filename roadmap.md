@@ -1,16 +1,19 @@
 # Roadmap — Zombie Night (3D)
 
-## In corso
+## Fatto
 
 - [x] Setup R3F + design system notte urbana cupa
 - [x] Città procedurale (palazzi, lampioni, auto, barili)
 - [x] Zombie con IA di inseguimento, ondate, collisioni
-- [ ] Player in terza persona: movimento camera-relativo, mira, sparo, ricarica
-- [ ] HUD + controlli touch (mobile) e tastiera/mouse (desktop)
+- [x] Player in terza persona: movimento camera-relativo, mira, sparo, ricarica
+- [x] HUD + controlli touch (mobile) e tastiera/mouse (desktop)
+- [x] Round infiniti, punti, headshot, schermata morte
+- [x] Mappa grande (raggio 82, 6 anelli di palazzi, più lampioni/props)
+- [x] Cassa misteriosa con 18 armi casuali (shotgun a pallettoni, sniper perforanti, wonder weapons)
+- [x] Perk machine: Juggernog, Speed Cola, Double Tap, Stamin-Up
+- [x] Boost drop dagli zombie: Munizioni Max, Insta-Kill, Punti Doppi, Nuke, Velocità
 
-## Stile Call of Duty Zombies (richiesta successiva)
+## Idee future
 
-- [ ] Round infiniti con contatore "ROUND" e difficoltà crescente
-- [ ] Punti per colpo/uccisione, bonus headshot
-- [ ] Acquisti stile "wall buy": arma migliore, munizioni, cura
-- [ ] Messaggio di round e schermata "sei morto al round N"
+- [ ] Minimappa / indicatori direzione verso cassa e perk
+- [ ] Pack-a-Punch per potenziare l'arma attuale
