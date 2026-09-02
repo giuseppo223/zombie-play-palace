@@ -44,7 +44,6 @@ export function GameCanvas() {
   useInputBindings();
 
   useEffect(() => {
-    (window as unknown as Record<string, unknown>)["__world"] = world;
     const onBlur = () => {
       input.keys.clear();
       input.firing = false;
