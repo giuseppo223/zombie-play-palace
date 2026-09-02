@@ -1,0 +1,325 @@
+import { useEffect, useRef, useState } from "react";
+import { useGame, COST_AMMO, COST_HEAL, COST_UPGRADE, WEAPONS } from "./store";
+import { useUi } from "./ui-store";
+import { input, world, resetWorld } from "./world";
+
+function BuyRow({
+  label,
+  cost,
+  hotkey,
+  onBuy,
+}: {
+  label: string;
+  cost: string;
+  hotkey: string;
+  onBuy: () => void;
+}) {
+  return (
+    <button
+      onClick={onBuy}
+      className="flex w-full items-center justify-between gap-3 border border-border/60 bg-card/70 px-3 py-2 text-left backdrop-blur-sm transition-colors hover:border-accent hover:bg-card"
+    >
+      <span className="font-hud text-sm tracking-wide text-foreground">{label}</span>
+      <span className="flex items-center gap-2">
+        <span className="font-hud text-sm text-accent">{cost}</span>
+        <span className="hidden rounded-sm bg-muted px-1.5 py-0.5 font-hud text-[10px] text-muted-foreground sm:inline">
+          {hotkey}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+export function HUD() {
+  const g = useGame();
+  const nearStation = useUi((s) => s.nearStation);
+  const [hurtPulse, setHurtPulse] = useState(0);
+  const lastHealth = useRef(g.health);
+
+  useEffect(() => {
+    if (g.health < lastHealth.current) setHurtPulse(Date.now());
+    lastHealth.current = g.health;
+  }, [g.health]);
+
+  useEffect(() => {
+    if (!g.notice) return;
+    const t = setTimeout(() => useGame.setState({ notice: "" }), 1600);
+    return () => clearTimeout(t);
+  }, [g.notice]);
+
+  const startGame = () => {
+    resetWorld();
+    g.start();
+  };
+
+  const lowHealth = g.health <= 35;
+
+  return (
+    <div className="pointer-events-none fixed inset-0 z-10 select-none">
+      {/* damage vignette */}
+      <div
+        key={hurtPulse}
+        className={`absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_45%,var(--blood-glow)_100%)] transition-opacity duration-500 ${
+          g.phase === "playing" && (lowHealth || Date.now() - hurtPulse < 400)
+            ? "opacity-90"
+            : "opacity-0"
+        }`}
+      />
+
+      {g.phase === "playing" && (
+        <>
+          {/* crosshair */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div className="relative h-6 w-6 opacity-70">
+              <span className="absolute left-1/2 top-0 h-2 w-[2px] -translate-x-1/2 bg-accent" />
+              <span className="absolute bottom-0 left-1/2 h-2 w-[2px] -translate-x-1/2 bg-accent" />
+              <span className="absolute left-0 top-1/2 h-[2px] w-2 -translate-y-1/2 bg-accent" />
+              <span className="absolute right-0 top-1/2 h-[2px] w-2 -translate-y-1/2 bg-accent" />
+            </div>
+          </div>
+
+          {/* top left: points + round */}
+          <div className="absolute left-4 top-4 space-y-1">
+            <div className="font-grunge text-3xl leading-none text-accent drop-shadow-[0_2px_10px_var(--blood-glow)]">
+              {g.points.toLocaleString("it-IT")}
+            </div>
+            <div className="font-hud text-xs uppercase tracking-[0.3em] text-muted-foreground">
+              punti
+            </div>
+          </div>
+
+          {/* top right: round */}
+          <div className="absolute right-4 top-4 text-right">
+            <div className="font-grunge text-3xl leading-none text-destructive">
+              {String(g.round).padStart(2, "0")}
+            </div>
+            <div className="font-hud text-xs uppercase tracking-[0.3em] text-muted-foreground">
+              round
+            </div>
+            <div className="mt-1 font-hud text-xs text-muted-foreground">
+              rimasti {g.zombiesLeft}
+            </div>
+          </div>
+
+          {/* bottom left: health */}
+          <div className="absolute bottom-24 left-4 w-40 sm:bottom-6">
+            <div className="h-2 w-full overflow-hidden bg-muted/70">
+              <div
+                className={`h-full transition-[width] duration-200 ${
+                  lowHealth ? "bg-destructive" : "bg-primary"
+                }`}
+                style={{ width: `${g.health}%` }}
+              />
+            </div>
+            <div className="mt-1 font-hud text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              vita {Math.round(g.health)}
+            </div>
+          </div>
+
+          {/* bottom right: weapon */}
+          <div className="absolute bottom-24 right-4 text-right sm:bottom-6">
+            <div className="font-hud text-sm uppercase tracking-[0.2em] text-muted-foreground">
+              {WEAPONS[g.weapon]?.name}
+            </div>
+            <div className="font-grunge text-2xl leading-tight text-foreground">
+              {g.reloading ? "RICARICA" : `${g.ammo} / ${g.reserve}`}
+            </div>
+            <div className="font-hud text-xs text-muted-foreground">
+              uccisioni {g.kills}
+            </div>
+          </div>
+
+          {/* round banner */}
+          {g.roundBanner > 0 && (
+            <div className="absolute left-1/2 top-[22%] -translate-x-1/2 text-center">
+              <div className="font-grunge text-5xl uppercase tracking-widest text-destructive drop-shadow-[0_0_25px_var(--blood-glow)] animate-pulse">
+                Round {g.round}
+              </div>
+              <div className="font-hud text-sm uppercase tracking-[0.4em] text-muted-foreground">
+                arrivano
+              </div>
+            </div>
+          )}
+
+          {g.notice && (
+            <div className="absolute left-1/2 top-[60%] -translate-x-1/2 font-hud text-sm uppercase tracking-[0.25em] text-accent">
+              {g.notice}
+            </div>
+          )}
+
+          {/* station buy panel */}
+          {nearStation && (
+            <div className="pointer-events-auto absolute left-1/2 top-1/2 w-64 -translate-x-1/2 translate-y-8 space-y-1.5">
+              <div className="font-hud text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                stazione rifornimenti
+              </div>
+              <BuyRow
+                label="Munizioni"
+                cost={`${COST_AMMO}`}
+                hotkey="1"
+                onBuy={() => g.buyAmmo()}
+              />
+              <BuyRow label="Cura" cost={`${COST_HEAL}`} hotkey="2" onBuy={() => g.buyHeal()} />
+              <BuyRow
+                label={
+                  g.weapon + 1 < WEAPONS.length ? `Arma: ${WEAPONS[g.weapon + 1]?.name}` : "Arma max"
+                }
+                cost={g.weapon + 1 < WEAPONS.length ? `${COST_UPGRADE[g.weapon]}` : "—"}
+                hotkey="3"
+                onBuy={() => g.buyUpgrade()}
+              />
+            </div>
+          )}
+        </>
+      )}
+
+      {g.phase === "menu" && (
+        <div className="pointer-events-auto absolute inset-0 flex flex-col items-center justify-center bg-background/80 px-6 text-center backdrop-blur-sm">
+          <div className="font-hud text-xs uppercase tracking-[0.5em] text-accent">
+            sopravvivenza a ondate
+          </div>
+          <h1 className="mt-3 font-grunge text-5xl uppercase leading-none text-destructive drop-shadow-[0_0_30px_var(--blood-glow)] sm:text-7xl">
+            Notte dei
+            <br />
+            Morti
+          </h1>
+          <p className="mt-5 max-w-sm font-hud text-sm text-muted-foreground">
+            Round infiniti. Ogni colpo vale punti, i colpi alla testa valgono il doppio. Spendi i
+            punti alla stazione per armi, munizioni e cure.
+          </p>
+          <button
+            onClick={startGame}
+            className="mt-7 border border-destructive/70 bg-destructive/15 px-8 py-3 font-grunge text-xl uppercase tracking-[0.2em] text-foreground transition-colors hover:bg-destructive/35"
+          >
+            Inizia
+          </button>
+          <div className="mt-6 space-y-1 font-hud text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            <div className="hidden sm:block">WASD muovi · mouse gira · click spara · R ricarica</div>
+            <div className="sm:hidden">stick sinistro muovi · trascina per girare · FUOCO spara</div>
+          </div>
+        </div>
+      )}
+
+      {g.phase === "dead" && (
+        <div className="pointer-events-auto absolute inset-0 flex flex-col items-center justify-center bg-background/85 px-6 text-center backdrop-blur-sm">
+          <h2 className="font-grunge text-5xl uppercase text-destructive drop-shadow-[0_0_30px_var(--blood-glow)]">
+            Sei morto
+          </h2>
+          <div className="mt-4 grid grid-cols-3 gap-6 font-hud">
+            <div>
+              <div className="text-2xl text-foreground">{g.round}</div>
+              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">round</div>
+            </div>
+            <div>
+              <div className="text-2xl text-foreground">{g.kills}</div>
+              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                uccisioni
+              </div>
+            </div>
+            <div>
+              <div className="text-2xl text-accent">{g.score.toLocaleString("it-IT")}</div>
+              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                punteggio
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={startGame}
+            className="mt-8 border border-destructive/70 bg-destructive/15 px-8 py-3 font-grunge text-xl uppercase tracking-[0.2em] text-foreground transition-colors hover:bg-destructive/35"
+          >
+            Riprova
+          </button>
+          <div className="mt-3 font-hud text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            record {g.best.toLocaleString("it-IT")}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Touch stick + fire button, shown on small screens. */
+export function TouchControls() {
+  const phase = useGame((s) => s.phase);
+  const stick = useRef<HTMLDivElement>(null);
+  const knob = useRef<HTMLDivElement>(null);
+  const originRef = useRef<{ x: number; y: number } | null>(null);
+
+  if (phase !== "playing") return null;
+
+  const setKnob = (dx: number, dy: number) => {
+    if (knob.current) knob.current.style.transform = `translate(${dx}px, ${dy}px)`;
+  };
+
+  return (
+    <div className="pointer-events-none fixed inset-0 z-20 sm:hidden">
+      <div
+        ref={stick}
+        className="pointer-events-auto absolute bottom-8 left-6 h-32 w-32 touch-none rounded-full border border-border/70 bg-card/40 backdrop-blur-sm"
+        onPointerDown={(e) => {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          const r = e.currentTarget.getBoundingClientRect();
+          originRef.current = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        }}
+        onPointerMove={(e) => {
+          const o = originRef.current;
+          if (!o) return;
+          let dx = e.clientX - o.x;
+          let dy = e.clientY - o.y;
+          const max = 52;
+          const len = Math.hypot(dx, dy);
+          if (len > max) {
+            dx = (dx / len) * max;
+            dy = (dy / len) * max;
+          }
+          setKnob(dx, dy);
+          input.moveX = dx / max;
+          input.moveY = -dy / max;
+        }}
+        onPointerUp={() => {
+          originRef.current = null;
+          input.moveX = 0;
+          input.moveY = 0;
+          setKnob(0, 0);
+        }}
+        onPointerCancel={() => {
+          originRef.current = null;
+          input.moveX = 0;
+          input.moveY = 0;
+          setKnob(0, 0);
+        }}
+      >
+        <div
+          ref={knob}
+          className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/60 bg-accent/25"
+        />
+      </div>
+
+      <button
+        className="pointer-events-auto absolute bottom-10 right-6 h-24 w-24 touch-none rounded-full border border-destructive/70 bg-destructive/25 font-grunge text-lg uppercase tracking-widest text-foreground active:bg-destructive/50"
+        onPointerDown={(e) => {
+          e.preventDefault();
+          input.firing = true;
+        }}
+        onPointerUp={() => (input.firing = false)}
+        onPointerLeave={() => (input.firing = false)}
+      >
+        fuoco
+      </button>
+
+      <button
+        className="pointer-events-auto absolute bottom-40 right-8 h-14 w-14 touch-none rounded-full border border-border/70 bg-card/50 font-hud text-xs uppercase text-muted-foreground active:bg-card"
+        onPointerDown={(e) => {
+          e.preventDefault();
+          const g = useGame.getState();
+          if (!g.reloading && g.ammo < g.weaponDef().mag && g.reserve > 0) {
+            g.setReloading(true);
+            world.reloadTimer = g.weaponDef().reload;
+          }
+        }}
+      >
+        ric
+      </button>
+    </div>
+  );
+}
