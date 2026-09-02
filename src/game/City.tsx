@@ -43,11 +43,17 @@ export function City() {
 
   const lamps = useMemo(() => {
     const out: { x: number; z: number }[] = [];
-    const count = 10;
-    for (let i = 0; i < count; i++) {
-      const a = (i / count) * Math.PI * 2;
-      out.push({ x: Math.cos(a) * 15, z: Math.sin(a) * 15 });
-    }
+    const rings = [
+      { r: 15, n: 10 },
+      { r: 42, n: 14 },
+      { r: 68, n: 18 },
+    ];
+    rings.forEach(({ r, n }, ri) => {
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2 + ri * 0.3;
+        out.push({ x: Math.cos(a) * r, z: Math.sin(a) * r });
+      }
+    });
     return out;
   }, []);
 

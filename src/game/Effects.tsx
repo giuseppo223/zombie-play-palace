@@ -74,14 +74,12 @@ export function Pickups() {
 export function MysteryBox() {
   const lid = useRef<THREE.Mesh>(null);
   const beam = useRef<THREE.Mesh>(null);
-  const zone = useRef<string | null>(null);
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
     if (lid.current) lid.current.rotation.x = -0.15 + Math.sin(t * 1.5) * 0.08;
     if (beam.current) {
       (beam.current.material as THREE.MeshBasicMaterial).opacity = 0.12 + Math.sin(t * 3) * 0.05;
     }
-    zone.current = null;
   });
   return (
     <group position={[BOX_POS.x, 0, BOX_POS.z]}>
