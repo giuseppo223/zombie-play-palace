@@ -244,6 +244,9 @@ export function Player() {
         decay={1.6}
         color="#dfe7ef"
       />
+      {/* soft key + rim light so the survivor reads against the dark city */}
+      <pointLight position={[1.1, 2.4, 1.6]} intensity={9} distance={9} decay={2} color="#9fb4c8" />
+      <pointLight position={[-1.2, 1.4, -1.4]} intensity={5} distance={7} decay={2} color="#c9d4c5" />
     </group>
   );
 }
