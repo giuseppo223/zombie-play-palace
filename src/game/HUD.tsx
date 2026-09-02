@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useGame, COST_AMMO, COST_HEAL, COST_UPGRADE, WEAPONS } from "./store";
+import { useGame, COST_AMMO, COST_HEAL, COST_BOX, WEAPONS, PERKS, PICKUP_LABEL } from "./store";
 import { useUi } from "./ui-store";
 import { input, world, resetWorld } from "./world";
 
@@ -32,7 +32,8 @@ function BuyRow({
 
 export function HUD() {
   const g = useGame();
-  const nearStation = useUi((s) => s.nearStation);
+  const zone = useUi((s) => s.zone);
+  const activeBoosts = (["instakill", "double", "speed"] as const).filter((k) => g.boosts[k] > 0);
   const [hurtPulse, setHurtPulse] = useState(0);
   const lastHealth = useRef(g.health);
 
@@ -129,26 +130,45 @@ export function HUD() {
             </div>
           </div>
 
-          {/* round banner */}
-          {g.roundBanner > 0 && (
-            <div className="absolute left-1/2 top-[22%] -translate-x-1/2 text-center">
-              <div className="font-grunge text-5xl uppercase tracking-widest text-destructive drop-shadow-[0_0_25px_var(--blood-glow)] animate-pulse">
-                Round {g.round}
-              </div>
-              <div className="font-hud text-sm uppercase tracking-[0.4em] text-muted-foreground">
-                arrivano
-              </div>
+          {/* perks owned (above health bar) */}
+          {g.perks.length > 0 && (
+            <div className="absolute bottom-36 left-4 flex gap-1.5 sm:bottom-16">
+              {g.perks.map((id) => {
+                const p = PERKS.find((x) => x.id === id)!;
+                return (
+                  <div
+                    key={id}
+                    title={p.name}
+                    className="flex h-8 w-8 items-center justify-center border border-border/60 bg-card/70 font-grunge text-sm"
+                    style={{ color: p.color, boxShadow: `0 0 10px ${p.color}55` }}
+                  >
+                    {p.name[0]}
+                  </div>
+                );
+              })}
             </div>
           )}
 
-          {g.notice && (
-            <div className="absolute left-1/2 top-[60%] -translate-x-1/2 font-hud text-sm uppercase tracking-[0.25em] text-accent">
-              {g.notice}
+          {/* active boosts */}
+          {activeBoosts.length > 0 && (
+            <div className="absolute left-1/2 top-4 flex -translate-x-1/2 gap-3">
+              {activeBoosts.map((k) => (
+                <div key={k} className="text-center">
+                  <div
+                    className={`font-grunge text-base uppercase tracking-widest ${
+                      g.boosts[k] <= 5 ? "animate-pulse text-destructive" : "text-accent"
+                    }`}
+                  >
+                    {PICKUP_LABEL[k]}
+                  </div>
+                  <div className="font-hud text-xs text-muted-foreground">{g.boosts[k]}s</div>
+                </div>
+              ))}
             </div>
           )}
 
           {/* station buy panel */}
-          {nearStation && (
+          {zone === "station" && (
             <div className="pointer-events-auto absolute left-1/2 top-1/2 w-64 -translate-x-1/2 translate-y-8 space-y-1.5">
               <div className="font-hud text-xs uppercase tracking-[0.3em] text-muted-foreground">
                 stazione rifornimenti
@@ -160,14 +180,42 @@ export function HUD() {
                 onBuy={() => g.buyAmmo()}
               />
               <BuyRow label="Cura" cost={`${COST_HEAL}`} hotkey="2" onBuy={() => g.buyHeal()} />
+            </div>
+          )}
+
+          {/* mystery box panel */}
+          {zone === "box" && (
+            <div className="pointer-events-auto absolute left-1/2 top-1/2 w-64 -translate-x-1/2 translate-y-8 space-y-1.5">
+              <div className="font-hud text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                cassa misteriosa · {WEAPONS.length} armi
+              </div>
               <BuyRow
-                label={
-                  g.weapon + 1 < WEAPONS.length ? `Arma: ${WEAPONS[g.weapon + 1]?.name}` : "Arma max"
-                }
-                cost={g.weapon + 1 < WEAPONS.length ? `${COST_UPGRADE[g.weapon]}` : "—"}
-                hotkey="3"
-                onBuy={() => g.buyUpgrade()}
+                label="Arma casuale"
+                cost={`${COST_BOX}`}
+                hotkey="1 / E"
+                onBuy={() => g.buyBox()}
               />
+            </div>
+          )}
+
+          {/* perk machines panel */}
+          {zone === "perks" && (
+            <div className="pointer-events-auto absolute left-1/2 top-1/2 w-72 -translate-x-1/2 translate-y-8 space-y-1.5">
+              <div className="font-hud text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                distributori perk
+              </div>
+              {PERKS.map((p, i) => {
+                const owned = g.perks.includes(p.id);
+                return (
+                  <BuyRow
+                    key={p.id}
+                    label={owned ? `${p.name} ✓` : `${p.name} — ${p.desc}`}
+                    cost={owned ? "attivo" : `${p.cost}`}
+                    hotkey={`${i + 1}`}
+                    onBuy={() => g.buyPerk(p.id)}
+                  />
+                );
+              })}
             </div>
           )}
         </>
@@ -184,8 +232,10 @@ export function HUD() {
             Morti
           </h1>
           <p className="mt-5 max-w-sm font-hud text-sm text-muted-foreground">
-            Round infiniti. Ogni colpo vale punti, i colpi alla testa valgono il doppio. Spendi i
-            punti alla stazione per armi, munizioni e cure.
+            Round infiniti in una città enorme. Colpi alla testa valgono il doppio. Spendi punti alla
+            stazione (munizioni, cure), alla cassa misteriosa ({WEAPONS.length} armi casuali) e ai
+            distributori perk. Gli zombie possono lasciare boost: Insta-Kill, Punti Doppi, Nuke,
+            Munizioni Max, Velocità.
           </p>
           <button
             onClick={startGame}

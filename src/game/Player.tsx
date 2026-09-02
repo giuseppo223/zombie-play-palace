@@ -1,11 +1,23 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { world, input, resolveCollisions, forward } from "./world";
-import { useGame } from "./store";
-import { useUi, STATION_POS } from "./ui-store";
+import { world, input, resolveCollisions, forward, type Zombie } from "./world";
+import { useGame, type PickupKind } from "./store";
+import { useUi, STATION_POS, BOX_POS, PERKS_POS, type Zone } from "./ui-store";
 
 const SPEED = 6.4;
+const DROP_CHANCE = 0.045;
+const DROP_KINDS: PickupKind[] = ["maxammo", "instakill", "double", "nuke", "speed"];
+
+function tryDrop(pos: THREE.Vector3) {
+  if (Math.random() > DROP_CHANCE) return;
+  const slot = world.pickups.find((p) => !p.active);
+  if (!slot) return;
+  slot.active = true;
+  slot.kind = DROP_KINDS[Math.floor(Math.random() * DROP_KINDS.length)]!;
+  slot.pos.copy(pos);
+  slot.life = 30;
+}
 
 export function Player() {
   const group = useRef<THREE.Group>(null);
@@ -30,6 +42,58 @@ export function Player() {
     [],
   );
 
+  function fireRay(g: ReturnType<typeof useGame.getState>, def: ReturnType<typeof g.weaponDef>) {
+    forward(world.yaw, v.dir);
+    v.dir.x += (Math.random() - 0.5) * def.spread * 2;
+    v.dir.z += (Math.random() - 0.5) * def.spread * 2;
+    v.dir.normalize();
+    v.origin.copy(world.playerPos);
+    v.origin.y = 1.35;
+
+    // hitscan: zombies intersected along the ray, sorted by distance
+    const hits: { t: number; z: Zombie; head: boolean }[] = [];
+    for (const z of world.zombies) {
+      if (!z.active || z.dying > 0) continue;
+      v.tmp.set(z.pos.x - v.origin.x, 0, z.pos.z - v.origin.z);
+      const t = v.tmp.x * v.dir.x + v.tmp.z * v.dir.z;
+      if (t < 0 || t > 70) continue;
+      const px = v.origin.x + v.dir.x * t;
+      const pz = v.origin.z + v.dir.z * t;
+      const lateral = Math.hypot(z.pos.x - px, z.pos.z - pz);
+      const bodyR = 0.42 * z.scale;
+      const headR = 0.24 * z.scale;
+      const headY = 1.63 * z.scale;
+      const bodyTop = 1.4 * z.scale;
+      const rayY = v.origin.y;
+      if (lateral < headR && Math.abs(rayY - headY) < headR + 0.12) hits.push({ t, z, head: true });
+      else if (lateral < bodyR && rayY < bodyTop) hits.push({ t, z, head: false });
+    }
+    hits.sort((a, b) => a.t - b.t);
+    const targets = def.pierce ? hits : hits.slice(0, 1);
+
+    const tracer = world.tracers.find((tr) => tr.life <= 0);
+    const endT = def.pierce ? 70 : hits[0] ? hits[0].t : 70;
+    if (tracer) {
+      tracer.life = 0.09;
+      tracer.from.set(v.origin.x + v.dir.x * 0.8, 1.35, v.origin.z + v.dir.z * 0.8);
+      tracer.to.set(v.origin.x + v.dir.x * endT, 1.35, v.origin.z + v.dir.z * endT);
+    }
+
+    for (const h of targets) {
+      const z = h.z;
+      const dmg = world.boost.instakill > 0 ? 999 : def.damage * (h.head ? 2.5 : 1);
+      z.hp -= dmg;
+      z.hitFlash = 1;
+      if (z.hp <= 0) {
+        z.dying = 0.001;
+        g.addKill(h.head ? 160 : 90);
+        tryDrop(z.pos);
+      } else {
+        g.addHit(h.head ? 40 : 15);
+      }
+    }
+  }
+
   function shoot() {
     const g = useGame.getState();
     const def = g.weaponDef();
@@ -44,60 +108,8 @@ export function Player() {
     g.spendAmmo();
     world.fireCd = def.fireRate;
     world.muzzle = 1;
-    world.shake = Math.min(1, world.shake + 0.25);
-
-    forward(world.yaw, v.dir);
-    v.dir.x += (Math.random() - 0.5) * def.spread * 2;
-    v.dir.z += (Math.random() - 0.5) * def.spread * 2;
-    v.dir.normalize();
-    v.origin.copy(world.playerPos);
-    v.origin.y = 1.35;
-
-    // hitscan: nearest zombie intersected along the ray
-    let best: { t: number; z: (typeof world.zombies)[number]; head: boolean } | null = null;
-    for (const z of world.zombies) {
-      if (!z.active || z.dying > 0) continue;
-      v.tmp.set(z.pos.x - v.origin.x, 0, z.pos.z - v.origin.z);
-      const t = v.tmp.x * v.dir.x + v.tmp.z * v.dir.z;
-      if (t < 0 || t > 60) continue;
-      const px = v.origin.x + v.dir.x * t;
-      const pz = v.origin.z + v.dir.z * t;
-      const lateral = Math.hypot(z.pos.x - px, z.pos.z - pz);
-      const bodyR = 0.42 * z.scale;
-      const headR = 0.24 * z.scale;
-      const headY = 1.63 * z.scale;
-      const bodyTop = 1.4 * z.scale;
-      const rayY = v.origin.y;
-      let hit = false;
-      let head = false;
-      if (lateral < headR && Math.abs(rayY - headY) < headR + 0.12) {
-        hit = true;
-        head = true;
-      } else if (lateral < bodyR && rayY < bodyTop) {
-        hit = true;
-      }
-      if (hit && (!best || t < best.t)) best = { t, z, head };
-    }
-
-    const tracer = world.tracers.find((tr) => tr.life <= 0);
-    const endT = best ? best.t : 60;
-    if (tracer) {
-      tracer.life = 0.09;
-      tracer.from.set(v.origin.x + v.dir.x * 0.8, 1.35, v.origin.z + v.dir.z * 0.8);
-      tracer.to.set(v.origin.x + v.dir.x * endT, 1.35, v.origin.z + v.dir.z * endT);
-    }
-
-    if (best) {
-      const z = best.z;
-      z.hp -= def.damage * (best.head ? 2.5 : 1);
-      z.hitFlash = 1;
-      if (z.hp <= 0) {
-        z.dying = 0.001;
-        g.addKill(best.head ? 160 : 90);
-      } else {
-        g.addHit(best.head ? 40 : 15);
-      }
-    }
+    world.shake = Math.min(1, world.shake + (def.pellets ? 0.45 : 0.25));
+    for (let i = 0; i < (def.pellets ?? 1); i++) fireRay(g, def);
   }
 
   useFrame(({ camera }, rawDelta) => {
@@ -125,7 +137,9 @@ export function Player() {
         mx /= len;
         my /= len;
       }
-      const sprint = k.has("ShiftLeft") || k.has("ShiftRight") ? 1.35 : 1;
+      let sprint = k.has("ShiftLeft") || k.has("ShiftRight") ? 1.35 : 1;
+      if (g.perks.includes("stamin")) sprint *= 1.18;
+      if (world.boost.speed > 0) sprint *= 1.3;
       v.move.set(0, 0, 0).addScaledVector(v.fwd, my).addScaledVector(v.right, mx);
       world.playerPos.addScaledVector(v.move, SPEED * sprint * delta);
       resolveCollisions(world.playerPos, 0.42);
@@ -148,9 +162,41 @@ export function Player() {
         if (!def.auto) input.firing = false;
       }
 
-      const near =
-        Math.hypot(world.playerPos.x - STATION_POS.x, world.playerPos.z - STATION_POS.z) < 4;
-      if (near !== useUi.getState().nearStation) useUi.getState().setNearStation(near);
+      // interaction zones
+      const px = world.playerPos.x;
+      const pz = world.playerPos.z;
+      let zone: Zone = null;
+      if (Math.hypot(px - STATION_POS.x, pz - STATION_POS.z) < 4) zone = "station";
+      else if (Math.hypot(px - BOX_POS.x, pz - BOX_POS.z) < 4) zone = "box";
+      else if (Math.hypot(px - PERKS_POS.x, pz - PERKS_POS.z) < 4.5) zone = "perks";
+      if (zone !== useUi.getState().zone) useUi.getState().setZone(zone);
+
+      // pickups
+      for (const p of world.pickups) {
+        if (!p.active) continue;
+        p.life -= delta;
+        if (p.life <= 0) {
+          p.active = false;
+          continue;
+        }
+        if (Math.hypot(px - p.pos.x, pz - p.pos.z) < 1.3) {
+          p.active = false;
+          g.applyPickup(p.kind);
+        }
+      }
+
+      // boost timers -> store only when the displayed second changes
+      const b = world.boost;
+      b.instakill = Math.max(0, b.instakill - delta);
+      b.double = Math.max(0, b.double - delta);
+      b.speed = Math.max(0, b.speed - delta);
+      const ui = g.boosts;
+      const ci = Math.ceil(b.instakill);
+      const cd = Math.ceil(b.double);
+      const cs = Math.ceil(b.speed);
+      if (ci !== ui.instakill || cd !== ui.double || cs !== ui.speed) {
+        g.syncBoosts({ instakill: ci, double: cd, speed: cs });
+      }
 
       g.tickBanner(delta);
     }

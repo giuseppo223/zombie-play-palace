@@ -4,10 +4,11 @@ import * as THREE from "three";
 import { City } from "./City";
 import { Player } from "./Player";
 import { ZombieSystem } from "./Zombies";
-import { Atmosphere, Station, Tracers } from "./Effects";
+import { Atmosphere, Station, Tracers, Pickups, MysteryBox, PerkMachines } from "./Effects";
 import { HUD, TouchControls } from "./HUD";
 import { input, world } from "./world";
-import { useGame } from "./store";
+import { useGame, PERKS } from "./store";
+import { useUi } from "./ui-store";
 
 function useInputBindings() {
   useEffect(() => {
@@ -23,9 +24,17 @@ function useInputBindings() {
         world.reloadTimer = g.weaponDef().reload;
       }
       if (e.code === "Space") input.firing = true;
-      if (e.code === "Digit1") g.buyAmmo();
-      if (e.code === "Digit2") g.buyHeal();
-      if (e.code === "Digit3") g.buyUpgrade();
+      const zone = useUi.getState().zone;
+      if (zone === "station") {
+        if (e.code === "Digit1") g.buyAmmo();
+        if (e.code === "Digit2") g.buyHeal();
+      } else if (zone === "box") {
+        if (e.code === "Digit1" || e.code === "KeyE" || e.code === "KeyF") g.buyBox();
+      } else if (zone === "perks") {
+        const idx = ["Digit1", "Digit2", "Digit3", "Digit4"].indexOf(e.code);
+        const perk = PERKS[idx];
+        if (perk) g.buyPerk(perk.id);
+      }
     };
     const onUp = (e: KeyboardEvent) => {
       input.keys.delete(e.code);
@@ -87,12 +96,15 @@ export function GameCanvas() {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
             gl.toneMappingExposure = 1.15;
             scene.background = new THREE.Color("#0b0e13");
-            scene.fog = new THREE.FogExp2("#0b0e13", 0.026);
+            scene.fog = new THREE.FogExp2("#0b0e13", 0.018);
           }}
         >
           <Atmosphere />
           <City />
           <Station />
+          <MysteryBox />
+          <PerkMachines />
+          <Pickups />
           <Player />
           <ZombieSystem />
           <Tracers />

@@ -1,11 +1,130 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { world, MAX_TRACERS } from "./world";
-import { STATION_POS } from "./ui-store";
-import { useGame } from "./store";
+import { world, MAX_TRACERS, MAX_PICKUPS } from "./world";
+import { STATION_POS, BOX_POS, PERKS_POS } from "./ui-store";
+import { useGame, PERKS } from "./store";
 
 const UP = new THREE.Vector3(0, 1, 0);
+
+const PICKUP_COLOR = {
+  maxammo: "#e8c07a",
+  instakill: "#c2413c",
+  double: "#4fa66b",
+  nuke: "#f0f0f0",
+  speed: "#5fb6e8",
+} as const;
+
+function PickupMesh({ index }: { index: number }) {
+  const group = useRef<THREE.Group>(null);
+  const mat = useRef<THREE.MeshStandardMaterial>(null);
+  const light = useRef<THREE.PointLight>(null);
+
+  useFrame(({ clock }) => {
+    const g = group.current;
+    const p = world.pickups[index];
+    if (!g || !p) return;
+    if (!p.active) {
+      if (g.visible) g.visible = false;
+      return;
+    }
+    g.visible = true;
+    const t = clock.elapsedTime;
+    g.position.set(p.pos.x, 1 + Math.sin(t * 3 + index) * 0.15, p.pos.z);
+    g.rotation.y = t * 2.2;
+    const c = PICKUP_COLOR[p.kind];
+    const blink = p.life < 6 ? (Math.sin(t * 14) > 0 ? 1 : 0.15) : 1;
+    if (mat.current) {
+      mat.current.color.set(c);
+      mat.current.emissive.set(c);
+      mat.current.emissiveIntensity = 2.2 * blink;
+    }
+    if (light.current) {
+      light.current.color.set(c);
+      light.current.intensity = 18 * blink;
+    }
+  });
+
+  return (
+    <group ref={group} visible={false}>
+      <mesh>
+        <octahedronGeometry args={[0.35, 0]} />
+        <meshStandardMaterial ref={mat} color="#fff" emissive="#fff" emissiveIntensity={2} toneMapped={false} />
+      </mesh>
+      <mesh rotation-x={Math.PI / 2}>
+        <torusGeometry args={[0.55, 0.03, 6, 24]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.4} />
+      </mesh>
+      <pointLight ref={light} intensity={18} distance={8} decay={2} />
+    </group>
+  );
+}
+
+export function Pickups() {
+  return (
+    <group>
+      {Array.from({ length: MAX_PICKUPS }, (_, i) => (
+        <PickupMesh key={i} index={i} />
+      ))}
+    </group>
+  );
+}
+
+/** Mystery box: pulsing chest with a light beam, random weapon on purchase. */
+export function MysteryBox() {
+  const lid = useRef<THREE.Mesh>(null);
+  const beam = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    if (lid.current) lid.current.rotation.x = -0.15 + Math.sin(t * 1.5) * 0.08;
+    if (beam.current) {
+      (beam.current.material as THREE.MeshBasicMaterial).opacity = 0.12 + Math.sin(t * 3) * 0.05;
+    }
+  });
+  return (
+    <group position={[BOX_POS.x, 0, BOX_POS.z]}>
+      <mesh position={[0, 0.45, 0]} castShadow>
+        <boxGeometry args={[1.9, 0.9, 1]} />
+        <meshStandardMaterial color="#4a3320" roughness={0.9} />
+      </mesh>
+      <mesh ref={lid} position={[0, 0.95, -0.5]} castShadow>
+        <boxGeometry args={[1.95, 0.12, 1.05]} />
+        <meshStandardMaterial color="#5a3d24" roughness={0.9} />
+      </mesh>
+      {/* question marks strip */}
+      <mesh position={[0, 0.5, 0.51]}>
+        <planeGeometry args={[1.6, 0.4]} />
+        <meshStandardMaterial color="#5fb6e8" emissive="#5fb6e8" emissiveIntensity={2} toneMapped={false} />
+      </mesh>
+      <mesh ref={beam} position={[0, 12, 0]}>
+        <cylinderGeometry args={[0.35, 0.9, 24, 12, 1, true]} />
+        <meshBasicMaterial color="#5fb6e8" transparent opacity={0.15} side={THREE.DoubleSide} depthWrite={false} />
+      </mesh>
+      <pointLight position={[0, 1.6, 0]} color="#5fb6e8" intensity={26} distance={14} decay={2} />
+    </group>
+  );
+}
+
+/** Row of perk vending machines. */
+export function PerkMachines() {
+  return (
+    <group position={[PERKS_POS.x, 0, PERKS_POS.z]}>
+      {PERKS.map((p, i) => (
+        <group key={p.id} position={[(i - 1.5) * 1.5, 0, 0]}>
+          <mesh position={[0, 1, 0]} castShadow>
+            <boxGeometry args={[1.1, 2, 0.8]} />
+            <meshStandardMaterial color="#1c2430" roughness={0.6} metalness={0.4} />
+          </mesh>
+          <mesh position={[0, 1.25, 0.41]}>
+            <planeGeometry args={[0.8, 1.1]} />
+            <meshStandardMaterial color={p.color} emissive={p.color} emissiveIntensity={1.4} toneMapped={false} />
+          </mesh>
+          <pointLight position={[0, 1.6, 0.9]} color={p.color} intensity={8} distance={6} decay={2} />
+        </group>
+      ))}
+    </group>
+  );
+}
 
 function Tracer({ index }: { index: number }) {
   const ref = useRef<THREE.Mesh>(null);
@@ -120,10 +239,11 @@ export function Atmosphere() {
         castShadow
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
-        shadow-camera-left={-60}
-        shadow-camera-right={60}
-        shadow-camera-top={60}
-        shadow-camera-bottom={-60}
+        shadow-camera-left={-100}
+        shadow-camera-right={100}
+        shadow-camera-top={100}
+        shadow-camera-bottom={-100}
+        shadow-camera-far={220}
       />
       {/* blood moon grows redder as rounds go up */}
       <pointLight
