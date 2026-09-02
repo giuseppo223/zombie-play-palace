@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { buildings, props, ARENA_RADIUS } from "./world";
 import { asphaltTexture, facadeTexture } from "./textures";
 
-function StreetLamp({ x, z }: { x: number; z: number }) {
+function StreetLamp({ x, z, lit }: { x: number; z: number; lit: boolean }) {
   return (
     <group position={[x, 0, z]}>
       <mesh position={[0, 2.4, 0]} castShadow>
@@ -14,13 +14,15 @@ function StreetLamp({ x, z }: { x: number; z: number }) {
         <boxGeometry args={[0.4, 0.16, 0.9]} />
         <meshStandardMaterial color="#e8c07a" emissive="#e8c07a" emissiveIntensity={2.4} />
       </mesh>
-      <pointLight
-        position={[0, 4.4, 0.35]}
-        color="#f0c07a"
-        intensity={22}
-        distance={16}
-        decay={2}
-      />
+      {lit && (
+        <pointLight
+          position={[0, 4.4, 0.35]}
+          color="#f0c07a"
+          intensity={22}
+          distance={16}
+          decay={2}
+        />
+      )}
     </group>
   );
 }
@@ -42,16 +44,16 @@ export function City() {
   );
 
   const lamps = useMemo(() => {
-    const out: { x: number; z: number }[] = [];
+    const out: { x: number; z: number; lit: boolean }[] = [];
     const rings = [
-      { r: 15, n: 10 },
-      { r: 42, n: 14 },
-      { r: 68, n: 18 },
+      { r: 15, n: 10, every: 1 },
+      { r: 42, n: 14, every: 2 },
+      { r: 68, n: 18, every: 3 },
     ];
-    rings.forEach(({ r, n }, ri) => {
+    rings.forEach(({ r, n, every }, ri) => {
       for (let i = 0; i < n; i++) {
         const a = (i / n) * Math.PI * 2 + ri * 0.3;
-        out.push({ x: Math.cos(a) * r, z: Math.sin(a) * r });
+        out.push({ x: Math.cos(a) * r, z: Math.sin(a) * r, lit: i % every === 0 });
       }
     });
     return out;
@@ -127,7 +129,7 @@ export function City() {
       ))}
 
       {lamps.map((l, i) => (
-        <StreetLamp key={i} x={l.x} z={l.z} />
+        <StreetLamp key={i} x={l.x} z={l.z} lit={l.lit} />
       ))}
     </group>
   );
