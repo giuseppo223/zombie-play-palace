@@ -1,13 +1,18 @@
 import { create } from "zustand";
+import { POI } from "./world";
+
+export type Zone = "station" | "box" | "perks" | null;
 
 type UiState = {
-  nearStation: boolean;
-  setNearStation: (v: boolean) => void;
+  zone: Zone;
+  setZone: (v: Zone) => void;
 };
 
 export const useUi = create<UiState>((set) => ({
-  nearStation: false,
-  setNearStation: (nearStation) => set({ nearStation }),
+  zone: null,
+  setZone: (zone) => set({ zone }),
 }));
 
-export const STATION_POS = { x: 8, z: 8 };
+export const STATION_POS = POI.station;
+export const BOX_POS = POI.box;
+export const PERKS_POS = POI.perks;
