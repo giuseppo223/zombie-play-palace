@@ -1,24 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { GameCanvas } from "@/game/GameCanvas";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Notte dei Morti — sparatutto zombie 3D a round" },
+      {
+        name: "description",
+        content:
+          "Sopravvivi a round infiniti di zombie in una città al buio: punti, colpi alla testa, armi da sbloccare. Gioca nel browser su desktop e mobile.",
+      },
+      { property: "og:title", content: "Notte dei Morti — sparatutto zombie 3D a round" },
+      {
+        property: "og:description",
+        content:
+          "Round infiniti, orde di zombie e una stazione rifornimenti: sopravvivi il più possibile in questo sparatutto 3D nel browser.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: GameCanvas,
 });
-
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
-}
