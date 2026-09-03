@@ -12,6 +12,9 @@ export type Zombie = {
   dying: number; // 0 = alive, >0 = death animation timer
   attackCd: number;
   scale: number;
+  /** damage dealt per hit */
+  damage: number;
+  boss: boolean;
 };
 
 export type Tracer = {
@@ -79,6 +82,8 @@ for (let i = 0; i < MAX_ZOMBIES; i++) {
     dying: 0,
     attackCd: 0,
     scale: 1,
+    damage: 9,
+    boss: false,
   });
 }
 

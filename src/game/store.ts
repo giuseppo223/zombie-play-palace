@@ -81,6 +81,9 @@ type GameState = {
   notice: string;
   perks: PerkId[];
   boosts: Boosts;
+  /** boss health 0..1, -1 when no boss alive */
+  bossHp: number;
+  setBossHp: (n: number) => void;
   weaponDef: () => WeaponDef;
   start: () => void;
   die: () => void;
@@ -121,6 +124,8 @@ export const useGame = create<GameState>((set, get) => ({
   notice: "",
   perks: [],
   boosts: { instakill: 0, double: 0, speed: 0 },
+  bossHp: -1,
+  setBossHp: (bossHp) => set({ bossHp }),
   weaponDef: () => {
     const s = get();
     const base = WEAPONS[s.weapon] ?? WEAPONS[0]!;
@@ -149,6 +154,7 @@ export const useGame = create<GameState>((set, get) => ({
       notice: "",
       perks: [],
       boosts: { instakill: 0, double: 0, speed: 0 },
+      bossHp: -1,
     }),
   die: () => set({ phase: "dead", best: Math.max(get().best, get().score) }),
   toMenu: () => set({ phase: "menu" }),
