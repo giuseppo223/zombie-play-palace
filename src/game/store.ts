@@ -248,6 +248,12 @@ export const useGame = create<GameState>((set, get) => ({
       let n = 0;
       world.zombies.forEach((z) => {
         if (z.active && z.dying === 0) {
+          if (z.boss) {
+            // bosses only take a chunk from a nuke
+            z.hp = Math.max(1, z.hp - z.maxHp * 0.3);
+            z.hitFlash = 1;
+            return;
+          }
           z.dying = 0.001;
           n++;
         }
