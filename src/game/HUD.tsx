@@ -102,6 +102,21 @@ export function HUD() {
             </div>
           </div>
 
+          {/* boss health bar */}
+          {g.bossHp >= 0 && (
+            <div className="absolute left-1/2 top-4 w-72 -translate-x-1/2 sm:w-96">
+              <div className="mb-1 text-center font-grunge text-sm uppercase tracking-[0.4em] text-destructive animate-pulse">
+                Boss
+              </div>
+              <div className="h-2.5 w-full overflow-hidden border border-destructive/60 bg-background/70">
+                <div
+                  className="h-full bg-destructive transition-[width] duration-150"
+                  style={{ width: `${Math.max(0, g.bossHp) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* bottom left: health */}
           <div className="absolute bottom-24 left-4 w-40 sm:bottom-6">
             <div className="h-2 w-full overflow-hidden bg-muted/70">

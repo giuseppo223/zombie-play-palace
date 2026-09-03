@@ -12,6 +12,9 @@
 - [x] Cassa misteriosa con 18 armi casuali (shotgun a pallettoni, sniper perforanti, wonder weapons)
 - [x] Perk machine: Juggernog, Speed Cola, Double Tap, Stamin-Up
 - [x] Boost drop dagli zombie: Munizioni Max, Insta-Kill, Punti Doppi, Nuke, Velocità
+- [x] Scaling per round (HP +16%/round, velocità e danno crescenti)
+- [x] Boss ogni 10 round (brute gigante, barra vita, +1500 punti, doppio drop)
+- [x] Personaggio dettagliato (gilet, berretto, arti articolati) con animazioni corsa/mira/rinculo/ricarica
 
 ## Idee future
 
