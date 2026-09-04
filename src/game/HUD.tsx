@@ -304,64 +304,115 @@ export function HUD() {
 }
 
 /** Touch stick + fire button, shown on small screens. */
-export function TouchControls() {
-  const phase = useGame((s) => s.phase);
-  const stick = useRef<HTMLDivElement>(null);
+function useStick(max: number, onMove: (nx: number, ny: number) => void, onEnd: () => void) {
   const knob = useRef<HTMLDivElement>(null);
-  const originRef = useRef<{ x: number; y: number } | null>(null);
-
-  if (phase !== "playing") return null;
-
+  const origin = useRef<{ x: number; y: number } | null>(null);
   const setKnob = (dx: number, dy: number) => {
     if (knob.current) knob.current.style.transform = `translate(${dx}px, ${dy}px)`;
   };
+  const end = () => {
+    origin.current = null;
+    setKnob(0, 0);
+    onEnd();
+  };
+  return {
+    knob,
+    handlers: {
+      onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => {
+        e.currentTarget.setPointerCapture(e.pointerId);
+        const r = e.currentTarget.getBoundingClientRect();
+        // dynamic origin: stick centres where the thumb lands
+        origin.current = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      },
+      onPointerMove: (e: React.PointerEvent<HTMLDivElement>) => {
+        const o = origin.current;
+        if (!o) return;
+        let dx = e.clientX - o.x;
+        let dy = e.clientY - o.y;
+        const len = Math.hypot(dx, dy);
+        if (len > max) {
+          dx = (dx / len) * max;
+          dy = (dy / len) * max;
+        }
+        setKnob(dx, dy);
+        onMove(dx / max, dy / max);
+      },
+      onPointerUp: end,
+      onPointerCancel: end,
+    },
+  };
+}
+
+export function TouchControls() {
+  const phase = useGame((s) => s.phase);
+  const [portrait, setPortrait] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(orientation: portrait) and (pointer: coarse)");
+    const upd = () => setPortrait(mq.matches);
+    upd();
+    mq.addEventListener("change", upd);
+    return () => mq.removeEventListener("change", upd);
+  }, []);
+
+  const move = useStick(
+    52,
+    (nx, ny) => {
+      input.moveX = nx;
+      input.moveY = -ny;
+    },
+    () => {
+      input.moveX = 0;
+      input.moveY = 0;
+    },
+  );
+  const aim = useStick(
+    48,
+    (nx) => {
+      input.aimX = nx;
+    },
+    () => {
+      input.aimX = 0;
+    },
+  );
+
+  if (phase !== "playing") return null;
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-20 sm:hidden">
+    <div className="pointer-events-none fixed inset-0 z-20 hidden pointer-coarse:block">
+      {portrait && (
+        <div className="absolute left-1/2 top-16 -translate-x-1/2 animate-pulse rounded-sm border border-accent/50 bg-card/70 px-3 py-1 font-hud text-xs uppercase tracking-[0.2em] text-accent">
+          Ruota il telefono in orizzontale
+        </div>
+      )}
+
+      {/* move stick */}
       <div
-        ref={stick}
-        className="pointer-events-auto absolute bottom-8 left-6 h-32 w-32 touch-none rounded-full border border-border/70 bg-card/40 backdrop-blur-sm"
-        onPointerDown={(e) => {
-          e.currentTarget.setPointerCapture(e.pointerId);
-          const r = e.currentTarget.getBoundingClientRect();
-          originRef.current = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-        }}
-        onPointerMove={(e) => {
-          const o = originRef.current;
-          if (!o) return;
-          let dx = e.clientX - o.x;
-          let dy = e.clientY - o.y;
-          const max = 52;
-          const len = Math.hypot(dx, dy);
-          if (len > max) {
-            dx = (dx / len) * max;
-            dy = (dy / len) * max;
-          }
-          setKnob(dx, dy);
-          input.moveX = dx / max;
-          input.moveY = -dy / max;
-        }}
-        onPointerUp={() => {
-          originRef.current = null;
-          input.moveX = 0;
-          input.moveY = 0;
-          setKnob(0, 0);
-        }}
-        onPointerCancel={() => {
-          originRef.current = null;
-          input.moveX = 0;
-          input.moveY = 0;
-          setKnob(0, 0);
-        }}
+        {...move.handlers}
+        className="pointer-events-auto absolute bottom-6 left-5 h-32 w-32 touch-none rounded-full border border-border/70 bg-card/40 backdrop-blur-sm landscape:bottom-5"
       >
         <div
-          ref={knob}
+          ref={move.knob}
           className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/60 bg-accent/25"
         />
       </div>
 
+      {/* aim stick */}
+      <div
+        {...aim.handlers}
+        className="pointer-events-auto absolute bottom-6 right-32 h-28 w-28 touch-none rounded-full border border-border/70 bg-card/40 backdrop-blur-sm landscape:bottom-5 landscape:right-36"
+      >
+        <div
+          ref={aim.knob}
+          className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/60 bg-primary/25"
+        />
+        <span className="pointer-events-none absolute inset-x-0 -top-5 text-center font-hud text-[10px] uppercase tracking-widest text-muted-foreground">
+          mira
+        </span>
+      </div>
+
       <button
-        className="pointer-events-auto absolute bottom-10 right-6 h-24 w-24 touch-none rounded-full border border-destructive/70 bg-destructive/25 font-grunge text-lg uppercase tracking-widest text-foreground active:bg-destructive/50"
+        className="pointer-events-auto absolute bottom-8 right-4 h-24 w-24 touch-none rounded-full border border-destructive/70 bg-destructive/25 font-grunge text-lg uppercase tracking-widest text-foreground active:bg-destructive/50"
         onPointerDown={(e) => {
           e.preventDefault();
           input.firing = true;
@@ -373,7 +424,7 @@ export function TouchControls() {
       </button>
 
       <button
-        className="pointer-events-auto absolute bottom-40 right-8 h-14 w-14 touch-none rounded-full border border-border/70 bg-card/50 font-hud text-xs uppercase text-muted-foreground active:bg-card"
+        className="pointer-events-auto absolute bottom-36 right-8 h-14 w-14 touch-none rounded-full border border-border/70 bg-card/50 font-hud text-xs uppercase text-muted-foreground active:bg-card landscape:bottom-8 landscape:right-72"
         onPointerDown={(e) => {
           e.preventDefault();
           const g = useGame.getState();
