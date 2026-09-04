@@ -51,6 +51,17 @@ export function HUD() {
   const startGame = () => {
     resetWorld();
     g.start();
+    // on touch devices go fullscreen and try to lock landscape
+    if (typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches) {
+      const el = document.documentElement;
+      const fs = el.requestFullscreen?.({ navigationUI: "hide" });
+      const lock = () => {
+        const o = screen.orientation as ScreenOrientation & { lock?: (t: string) => Promise<void> };
+        o.lock?.("landscape").catch(() => {});
+      };
+      if (fs) fs.then(lock).catch(lock);
+      else lock();
+    }
   };
 
   const lowHealth = g.health <= 35;
