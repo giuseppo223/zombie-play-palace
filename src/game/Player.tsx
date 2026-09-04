@@ -148,6 +148,11 @@ export function Player() {
 
     world.yaw -= input.yawDelta * 0.0032;
     input.yawDelta = 0;
+    if (playing && input.aimX !== 0) {
+      // rate-controlled turning from the aim stick: gentle near centre, fast at the edge
+      const a = input.aimX;
+      world.yaw -= Math.sign(a) * Math.pow(Math.abs(a), 1.6) * 3.6 * delta;
+    }
 
     forward(world.yaw, v.fwd);
     v.right.set(-v.fwd.z, 0, v.fwd.x);
