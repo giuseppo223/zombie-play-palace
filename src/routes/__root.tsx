@@ -76,7 +76,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" },
       { title: "Notte dei Morti — sparatutto zombie 3D" },
       { name: "description", content: "Sparatutto zombie 3D a round infiniti nel browser." },
       { name: "author", content: "Lovable" },
