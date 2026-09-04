@@ -33,6 +33,7 @@ function BuyRow({
 export function HUD() {
   const g = useGame();
   const zone = useUi((s) => s.zone);
+  const nearPerk = useUi((s) => s.perk);
   const activeBoosts = (["instakill", "double", "speed"] as const).filter((k) => g.boosts[k] > 0);
   const [hurtPulse, setHurtPulse] = useState(0);
   const lastHealth = useRef(g.health);
