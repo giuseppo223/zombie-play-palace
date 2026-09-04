@@ -33,6 +33,7 @@ function BuyRow({
 export function HUD() {
   const g = useGame();
   const zone = useUi((s) => s.zone);
+  const nearPerk = useUi((s) => s.perk);
   const activeBoosts = (["instakill", "double", "speed"] as const).filter((k) => g.boosts[k] > 0);
   const [hurtPulse, setHurtPulse] = useState(0);
   const lastHealth = useRef(g.health);
@@ -224,26 +225,26 @@ export function HUD() {
             </div>
           )}
 
-          {/* perk machines panel */}
-          {zone === "perks" && (
-            <div className="pointer-events-auto absolute left-1/2 top-1/2 w-72 -translate-x-1/2 translate-y-8 space-y-1.5">
-              <div className="font-hud text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                distributori perk
-              </div>
-              {PERKS.map((p, i) => {
-                const owned = g.perks.includes(p.id);
-                return (
+          {/* single perk machine panel */}
+          {zone === "perks" &&
+            (() => {
+              const p = PERKS.find((x) => x.id === nearPerk);
+              if (!p) return null;
+              const owned = g.perks.includes(p.id);
+              return (
+                <div className="pointer-events-auto absolute left-1/2 top-1/2 w-72 -translate-x-1/2 translate-y-8 space-y-1.5">
+                  <div className="font-hud text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                    distributore perk
+                  </div>
                   <BuyRow
-                    key={p.id}
                     label={owned ? `${p.name} ✓` : `${p.name} — ${p.desc}`}
                     cost={owned ? "attivo" : `${p.cost}`}
-                    hotkey={`${i + 1}`}
+                    hotkey="1"
                     onBuy={() => g.buyPerk(p.id)}
                   />
-                );
-              })}
-            </div>
-          )}
+                </div>
+              );
+            })()}
         </>
       )}
 

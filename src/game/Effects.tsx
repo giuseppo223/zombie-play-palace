@@ -2,7 +2,7 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { world, MAX_TRACERS, MAX_PICKUPS } from "./world";
-import { STATION_POS, BOX_POS, PERKS_POS } from "./ui-store";
+import { STATION_POS, BOX_POS, PERK_POSITIONS } from "./ui-store";
 import { useGame, PERKS } from "./store";
 
 const UP = new THREE.Vector3(0, 1, 0);
@@ -105,23 +105,31 @@ export function MysteryBox() {
   );
 }
 
-/** Row of perk vending machines. */
+/** Perk vending machines, each standing alone somewhere in the city. */
 export function PerkMachines() {
   return (
-    <group position={[PERKS_POS.x, 0, PERKS_POS.z]}>
-      {PERKS.map((p, i) => (
-        <group key={p.id} position={[(i - 1.5) * 1.5, 0, 0]}>
-          <mesh position={[0, 1, 0]} castShadow>
-            <boxGeometry args={[1.1, 2, 0.8]} />
-            <meshStandardMaterial color="#1c2430" roughness={0.6} metalness={0.4} />
-          </mesh>
-          <mesh position={[0, 1.25, 0.41]}>
-            <planeGeometry args={[0.8, 1.1]} />
-            <meshStandardMaterial color={p.color} emissive={p.color} emissiveIntensity={1.4} toneMapped={false} />
-          </mesh>
-          <pointLight position={[0, 1.6, 0.9]} color={p.color} intensity={8} distance={6} decay={2} />
-        </group>
-      ))}
+    <group>
+      {PERK_POSITIONS.map((spot) => {
+        const p = PERKS.find((x) => x.id === spot.id);
+        if (!p) return null;
+        return (
+          <group key={spot.id} position={[spot.x, 0, spot.z]} rotation={[0, Math.atan2(-spot.x, -spot.z), 0]}>
+            <mesh position={[0, 1, 0]} castShadow>
+              <boxGeometry args={[1.2, 2, 0.9]} />
+              <meshStandardMaterial color="#1c2430" roughness={0.6} metalness={0.4} />
+            </mesh>
+            <mesh position={[0, 1.25, 0.46]}>
+              <planeGeometry args={[0.9, 1.2]} />
+              <meshStandardMaterial color={p.color} emissive={p.color} emissiveIntensity={1.5} toneMapped={false} />
+            </mesh>
+            <mesh position={[0, 2.6, 0]}>
+              <sphereGeometry args={[0.16, 10, 10]} />
+              <meshBasicMaterial color={p.color} toneMapped={false} />
+            </mesh>
+            <pointLight position={[0, 1.8, 0.9]} color={p.color} intensity={14} distance={9} decay={2} />
+          </group>
+        );
+      })}
     </group>
   );
 }

@@ -2,8 +2,8 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { world, input, resolveCollisions, forward, type Zombie } from "./world";
-import { useGame, type PickupKind } from "./store";
-import { useUi, STATION_POS, BOX_POS, PERKS_POS, type Zone } from "./ui-store";
+import { useGame, type PickupKind, type PerkId } from "./store";
+import { useUi, STATION_POS, BOX_POS, PERK_POSITIONS, type Zone } from "./ui-store";
 
 const SPEED = 6.4;
 const DROP_CHANCE = 0.045;
@@ -203,10 +203,20 @@ export function Player() {
       const px = world.playerPos.x;
       const pz = world.playerPos.z;
       let zone: Zone = null;
+      let perk: PerkId | null = null;
       if (Math.hypot(px - STATION_POS.x, pz - STATION_POS.z) < 4) zone = "station";
       else if (Math.hypot(px - BOX_POS.x, pz - BOX_POS.z) < 4) zone = "box";
-      else if (Math.hypot(px - PERKS_POS.x, pz - PERKS_POS.z) < 4.5) zone = "perks";
-      if (zone !== useUi.getState().zone) useUi.getState().setZone(zone);
+      else {
+        for (const s of PERK_POSITIONS) {
+          if (Math.hypot(px - s.x, pz - s.z) < 3.5) {
+            zone = "perks";
+            perk = s.id;
+            break;
+          }
+        }
+      }
+      const ustate = useUi.getState();
+      if (zone !== ustate.zone || perk !== ustate.perk) ustate.setZone(zone, perk);
 
       for (const p of world.pickups) {
         if (!p.active) continue;

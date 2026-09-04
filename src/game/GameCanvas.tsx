@@ -24,16 +24,14 @@ function useInputBindings() {
         world.reloadTimer = g.weaponDef().reload;
       }
       if (e.code === "Space") input.firing = true;
-      const zone = useUi.getState().zone;
+      const { zone, perk: nearPerk } = useUi.getState();
       if (zone === "station") {
         if (e.code === "Digit1") g.buyAmmo();
         if (e.code === "Digit2") g.buyHeal();
       } else if (zone === "box") {
         if (e.code === "Digit1" || e.code === "KeyE" || e.code === "KeyF") g.buyBox();
-      } else if (zone === "perks") {
-        const idx = ["Digit1", "Digit2", "Digit3", "Digit4"].indexOf(e.code);
-        const perk = PERKS[idx];
-        if (perk) g.buyPerk(perk.id);
+      } else if (zone === "perks" && nearPerk) {
+        if (e.code === "Digit1" || e.code === "KeyE" || e.code === "KeyF") g.buyPerk(nearPerk);
       }
     };
     const onUp = (e: KeyboardEvent) => {
