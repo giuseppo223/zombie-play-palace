@@ -2,7 +2,7 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { world, MAX_TRACERS, MAX_PICKUPS } from "./world";
-import { STATION_POS, BOX_POS, PERKS_POS } from "./ui-store";
+import { STATION_POS, BOX_POS, PERK_POSITIONS } from "./ui-store";
 import { useGame, PERKS } from "./store";
 
 const UP = new THREE.Vector3(0, 1, 0);
