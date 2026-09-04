@@ -3,7 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { world, input, resolveCollisions, forward, type Zombie } from "./world";
 import { useGame, type PickupKind } from "./store";
-import { useUi, STATION_POS, BOX_POS, PERKS_POS, type Zone } from "./ui-store";
+import { useUi, STATION_POS, BOX_POS, PERK_POSITIONS, type Zone } from "./ui-store";
 
 const SPEED = 6.4;
 const DROP_CHANCE = 0.045;
