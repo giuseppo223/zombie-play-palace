@@ -116,11 +116,23 @@ export type Building = {
 export const POI = {
   station: { x: 8, z: 8 },
   box: { x: -30, z: 18 },
-  perks: { x: 22, z: -34 },
 };
 
+/** Each perk machine stands alone in its own corner of the city. */
+export const PERK_SPOTS: { id: "jugger" | "speed" | "doubletap" | "stamin"; x: number; z: number }[] =
+  (() => {
+    const ids = ["jugger", "speed", "doubletap", "stamin"] as const;
+    let seed = 909;
+    return ids.map((id, i) => {
+      const a = (i / ids.length) * Math.PI * 2 + rand(seed++) * 0.9;
+      const r = 30 + rand(seed++) * 34;
+      return { id, x: Math.cos(a) * r, z: Math.sin(a) * r };
+    });
+  })();
+
 function nearPoi(x: number, z: number, r: number) {
-  return Object.values(POI).some((p) => Math.hypot(x - p.x, z - p.z) < r);
+  if (Object.values(POI).some((p) => Math.hypot(x - p.x, z - p.z) < r)) return true;
+  return PERK_SPOTS.some((p) => Math.hypot(x - p.x, z - p.z) < r);
 }
 
 export const buildings: Building[] = (() => {
