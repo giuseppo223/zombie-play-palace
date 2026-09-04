@@ -271,7 +271,7 @@ export function HUD() {
           </button>
           <div className="mt-6 space-y-1 font-hud text-xs uppercase tracking-[0.2em] text-muted-foreground">
             <div className="hidden sm:block">WASD muovi · mouse gira · click spara · R ricarica</div>
-            <div className="sm:hidden">stick sinistro muovi · trascina per girare · FUOCO spara</div>
+            <div className="sm:hidden">stick sinistro muovi · stick destro mira · FUOCO spara · meglio in orizzontale</div>
           </div>
         </div>
       )}
