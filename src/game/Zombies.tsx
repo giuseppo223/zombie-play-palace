@@ -2,6 +2,7 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { world, resolveCollisions, MAX_ZOMBIES, ARENA_RADIUS, type Zombie } from "./world";
+import { zoneAt, randomPointInZone } from "./zones";
 import { useGame } from "./store";
 
 const SKIN = "#6f7f63";
@@ -206,16 +207,20 @@ function ZombieMesh({ index }: { index: number }) {
   );
 }
 
-function spawn(z: Zombie, round: number, seed: number, boss = false) {
-  const a = Math.random() * Math.PI * 2;
-  const r = 26 + Math.random() * 14;
-  z.pos.set(world.playerPos.x + Math.cos(a) * r, 0, world.playerPos.z + Math.sin(a) * r);
+/** Place a zombie somewhere inside the player's current zone, away from the player. */
+function placeInPlayerZone(z: Zombie, boss: boolean) {
+  const pz = zoneAt(world.playerPos.x, world.playerPos.z);
+  randomPointInZone(pz, world.playerPos.x, world.playerPos.z, 14, z.pos);
   const d = Math.hypot(z.pos.x, z.pos.z);
   if (d > ARENA_RADIUS - 2) {
     z.pos.x = (z.pos.x / d) * (ARENA_RADIUS - 2);
     z.pos.z = (z.pos.z / d) * (ARENA_RADIUS - 2);
   }
   resolveCollisions(z.pos, boss ? 1.2 : 0.6);
+}
+
+function spawn(z: Zombie, round: number, seed: number, boss = false) {
+  placeInPlayerZone(z, boss);
   z.active = true;
   z.dying = 0;
   z.hitFlash = 0;
@@ -302,6 +307,7 @@ export function ZombieSystem() {
     // --- movement / attacks ---
     let alive = 0;
     let bossHp = -1;
+    const playerZone = zoneAt(world.playerPos.x, world.playerPos.z);
     for (const z of world.zombies) {
       if (!z.active) continue;
       if (z.dying > 0) {
@@ -322,6 +328,14 @@ export function ZombieSystem() {
 
       const reach = z.boss ? 2.3 : 1.15;
       if (dist > reach) {
+        // stuck behind a zone wall after the player moved on: re-emerge in the player's zone
+        if (dist > 22 && zoneAt(z.pos.x, z.pos.z) !== playerZone) {
+          z.stuck += delta;
+          if (z.stuck > 3) {
+            placeInPlayerZone(z, z.boss);
+            z.stuck = 0;
+          }
+        } else z.stuck = 0;
         z.pos.addScaledVector(dirs.toPlayer, z.speed * delta);
         resolveCollisions(z.pos, z.boss ? 0.9 : 0.45);
       } else if (z.attackCd <= 0) {

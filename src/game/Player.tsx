@@ -2,6 +2,7 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { world, input, resolveCollisions, forward, type Zombie } from "./world";
+import { gates, zoneAt } from "./zones";
 import { useGame, type PickupKind, type PerkId } from "./store";
 import { useUi, STATION_POS, BOX_POS, PERK_POSITIONS, type Zone } from "./ui-store";
 
@@ -204,6 +205,7 @@ export function Player() {
       const pz = world.playerPos.z;
       let zone: Zone = null;
       let perk: PerkId | null = null;
+      let gateId = -1;
       if (Math.hypot(px - STATION_POS.x, pz - STATION_POS.z) < 4) zone = "station";
       else if (Math.hypot(px - BOX_POS.x, pz - BOX_POS.z) < 4) zone = "box";
       else {
@@ -214,9 +216,21 @@ export function Player() {
             break;
           }
         }
+        if (!zone) {
+          for (const gt of gates) {
+            if (!gt.open && Math.hypot(px - gt.x, pz - gt.z) < 4.2) {
+              zone = "gate";
+              gateId = gt.id;
+              break;
+            }
+          }
+        }
       }
       const ustate = useUi.getState();
-      if (zone !== ustate.zone || perk !== ustate.perk) ustate.setZone(zone, perk);
+      if (zone !== ustate.zone || perk !== ustate.perk || gateId !== ustate.gate)
+        ustate.setZone(zone, perk, gateId);
+      const zid = zoneAt(px, pz);
+      if (zid !== g.zoneId) g.setZoneId(zid);
 
       for (const p of world.pickups) {
         if (!p.active) continue;
