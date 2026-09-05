@@ -16,6 +16,8 @@ export type Zombie = {
   /** damage dealt per hit */
   damage: number;
   boss: boolean;
+  /** seconds spent far away in another zone (walls in the way) */
+  stuck: number;
 };
 
 export type Tracer = {
@@ -87,6 +89,7 @@ for (let i = 0; i < MAX_ZOMBIES; i++) {
     scale: 1,
     damage: 9,
     boss: false,
+    stuck: 0,
   });
 }
 
