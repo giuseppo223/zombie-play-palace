@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { world } from "./world";
+import { gates, ZONE_NAMES } from "./zones";
 
 export type Phase = "menu" | "playing" | "dead";
 
