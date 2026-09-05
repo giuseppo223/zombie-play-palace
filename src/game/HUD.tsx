@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useGame, COST_AMMO, COST_HEAL, COST_BOX, WEAPONS, PERKS, PICKUP_LABEL } from "./store";
 import { useUi } from "./ui-store";
 import { input, world, resetWorld } from "./world";
+import { gates, ZONE_NAMES } from "./zones";
 
 function BuyRow({
   label,
@@ -34,6 +35,7 @@ export function HUD() {
   const g = useGame();
   const zone = useUi((s) => s.zone);
   const nearPerk = useUi((s) => s.perk);
+  const nearGate = useUi((s) => s.gate);
   const activeBoosts = (["instakill", "double", "speed"] as const).filter((k) => g.boosts[k] > 0);
   const [hurtPulse, setHurtPulse] = useState(0);
   const lastHealth = useRef(g.health);
@@ -111,6 +113,9 @@ export function HUD() {
             </div>
             <div className="mt-1 font-hud text-xs text-muted-foreground">
               rimasti {g.zombiesLeft}
+            </div>
+            <div className="mt-1 font-hud text-xs uppercase tracking-[0.2em] text-accent">
+              {ZONE_NAMES[g.zoneId]}
             </div>
           </div>
 
@@ -224,6 +229,28 @@ export function HUD() {
               />
             </div>
           )}
+
+          {/* zone gate panel */}
+          {zone === "gate" &&
+            (() => {
+              const gt = gates[nearGate];
+              if (!gt) return null;
+              const other = gt.a === g.zoneId ? gt.b : gt.a;
+              return (
+                <div className="pointer-events-auto absolute left-1/2 top-1/2 w-72 -translate-x-1/2 translate-y-8 space-y-1.5">
+                  <div className="font-hud text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                    cancello → {ZONE_NAMES[other]}
+                  </div>
+                  {gt.openable ? (
+                    <BuyRow label="Apri cancello" cost={`${gt.cost}`} hotkey="1 / E" onBuy={() => g.openGate(gt.id)} />
+                  ) : (
+                    <div className="border border-destructive/50 bg-card/70 px-3 py-2 font-hud text-sm tracking-wide text-destructive">
+                      Saldato — non si apre. Cerca un altro passaggio.
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
           {/* single perk machine panel */}
           {zone === "perks" &&

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 import { City } from "./City";
+import { ZoneWalls } from "./Zones";
 import { Player } from "./Player";
 import { ZombieSystem } from "./Zombies";
 import { Atmosphere, Station, Tracers, Pickups, MysteryBox, PerkMachines } from "./Effects";
@@ -24,14 +25,17 @@ function useInputBindings() {
         world.reloadTimer = g.weaponDef().reload;
       }
       if (e.code === "Space") input.firing = true;
-      const { zone, perk: nearPerk } = useUi.getState();
+      const { zone, perk: nearPerk, gate: nearGate } = useUi.getState();
+      const use = e.code === "Digit1" || e.code === "KeyE" || e.code === "KeyF";
       if (zone === "station") {
         if (e.code === "Digit1") g.buyAmmo();
         if (e.code === "Digit2") g.buyHeal();
       } else if (zone === "box") {
-        if (e.code === "Digit1" || e.code === "KeyE" || e.code === "KeyF") g.buyBox();
+        if (use) g.buyBox();
       } else if (zone === "perks" && nearPerk) {
-        if (e.code === "Digit1" || e.code === "KeyE" || e.code === "KeyF") g.buyPerk(nearPerk);
+        if (use) g.buyPerk(nearPerk);
+      } else if (zone === "gate" && nearGate >= 0) {
+        if (use) g.openGate(nearGate);
       }
     };
     const onUp = (e: KeyboardEvent) => {
@@ -99,6 +103,7 @@ export function GameCanvas() {
         >
           <Atmosphere />
           <City />
+          <ZoneWalls />
           <Station />
           <MysteryBox />
           <PerkMachines />
