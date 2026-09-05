@@ -126,8 +126,9 @@ export const PERK_SPOTS: { id: "jugger" | "speed" | "doubletap" | "stamin"; x: n
     const ids = ["jugger", "speed", "doubletap", "stamin"] as const;
     let seed = 909;
     return ids.map((id, i) => {
-      const a = (i / ids.length) * Math.PI * 2 + rand(seed++) * 0.9;
-      const r = 30 + rand(seed++) * 34;
+      // keep clear of the zone walls (radial walls every 45°, ring walls at r=20/50/82)
+      const a = (i / ids.length) * Math.PI * 2 + 0.25 + rand(seed++) * 0.3;
+      const r = i % 2 === 0 ? 27 + rand(seed++) * 18 : 56 + rand(seed++) * 20;
       return { id, x: Math.cos(a) * r, z: Math.sin(a) * r };
     });
   })();
