@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { collideWalls, nearGate, resetGates } from "./zones";
 
 export type Zombie = {
   active: boolean;
@@ -115,7 +116,8 @@ export type Building = {
 /** Points of interest kept clear of buildings/props. */
 export const POI = {
   station: { x: 8, z: 8 },
-  box: { x: -30, z: 18 },
+  /** mystery box sits in the first unlockable zone (east quarter) */
+  box: { x: 26, z: 22 },
 };
 
 /** Each perk machine stands alone in its own corner of the city. */
@@ -132,6 +134,7 @@ export const PERK_SPOTS: { id: "jugger" | "speed" | "doubletap" | "stamin"; x: n
 
 function nearPoi(x: number, z: number, r: number) {
   if (Object.values(POI).some((p) => Math.hypot(x - p.x, z - p.z) < r)) return true;
+  if (nearGate(x, z, r + 1)) return true;
   return PERK_SPOTS.some((p) => Math.hypot(x - p.x, z - p.z) < r);
 }
 
@@ -186,6 +189,7 @@ props.forEach((p) => {
 
 /** Push a circle of `radius` out of every obstacle and keep it inside the arena. */
 export function resolveCollisions(pos: THREE.Vector3, radius: number) {
+  collideWalls(pos, radius);
   for (const o of world.obstacles) {
     const dx = pos.x - o.x;
     const dz = pos.z - o.z;
@@ -204,6 +208,7 @@ export function resolveCollisions(pos: THREE.Vector3, radius: number) {
 }
 
 export function resetWorld() {
+  resetGates();
   world.yaw = 0;
   world.playerPos.set(0, 0, 0);
   world.playerVel.set(0, 0, 0);
