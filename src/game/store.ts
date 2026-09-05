@@ -102,6 +102,11 @@ type GameState = {
   buyHeal: () => void;
   buyPerk: (id: PerkId) => void;
   buyBox: () => void;
+  /** current zone index (0..12) for the HUD */
+  zoneId: number;
+  gatesOpened: number;
+  setZoneId: (z: number) => void;
+  openGate: (id: number) => void;
   applyPickup: (k: PickupKind) => void;
   syncBoosts: (b: Boosts) => void;
 };
@@ -126,6 +131,23 @@ export const useGame = create<GameState>((set, get) => ({
   boosts: { instakill: 0, double: 0, speed: 0 },
   bossHp: -1,
   setBossHp: (bossHp) => set({ bossHp }),
+  zoneId: 0,
+  gatesOpened: 0,
+  setZoneId: (zoneId) => set({ zoneId }),
+  openGate: (id) => {
+    const s = get();
+    const gate = gates[id];
+    if (!gate || gate.open) return;
+    if (!gate.openable) return set({ notice: "Cancello saldato: non si apre" });
+    if (s.points < gate.cost) return set({ notice: "Punti insufficienti" });
+    gate.open = true;
+    set({
+      points: s.points - gate.cost,
+      gatesOpened: s.gatesOpened + 1,
+      notice: `Cancello aperto: ${ZONE_NAMES[gate.a === s.zoneId ? gate.b : gate.a]}`,
+    });
+    world.shake = Math.max(world.shake, 0.4);
+  },
   weaponDef: () => {
     const s = get();
     const base = WEAPONS[s.weapon] ?? WEAPONS[0]!;
@@ -155,6 +177,8 @@ export const useGame = create<GameState>((set, get) => ({
       perks: [],
       boosts: { instakill: 0, double: 0, speed: 0 },
       bossHp: -1,
+      zoneId: 0,
+      gatesOpened: 0,
     }),
   die: () => set({ phase: "dead", best: Math.max(get().best, get().score) }),
   toMenu: () => set({ phase: "menu" }),
