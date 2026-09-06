@@ -16,6 +16,8 @@
 - [x] Boss ogni 10 round (brute gigante, barra vita, +1500 punti, doppio drop)
 - [x] Personaggio dettagliato (gilet, berretto, arti articolati) con animazioni corsa/mira/rinculo/ricarica
 
+- [x] Mappa divisa in 13 zone murate con 24 cancelli: 12 apribili a punti (1-2 per zona), gli altri saldati
+
 ## Idee future
 
 - [ ] Minimappa / indicatori direzione verso cassa e perk

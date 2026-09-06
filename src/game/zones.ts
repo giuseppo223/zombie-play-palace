@@ -172,8 +172,8 @@ for (let j = 0; j < 8; j++) {
  *   centro -> Sud -> Cantiere -> Periferia -> Mercato -> Cimitero -> Ovest
  */
 const OPENABLE: Record<number, number> = {
-  0: 750, // centro - est
-  3: 750, // centro - sud
+  0: 500, // centro - est
+  3: 500, // centro - sud
   8: 1000, // est - porto
   15: 1000, // sud - cantiere
   17: 1250, // porto - industriale
