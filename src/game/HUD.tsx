@@ -162,6 +162,39 @@ export function HUD() {
             </div>
           </div>
 
+          {/* Überschnalle charge tracker */}
+          <div className="absolute bottom-36 right-4 space-y-1 text-right sm:bottom-16">
+            <div className="font-hud text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+              überschnalle
+            </div>
+            <div className="flex justify-end gap-1.5">
+              {g.uberCharges.map((c, i) => {
+                const full = c >= KILLS_PER_UBER;
+                return (
+                  <div key={i} className="w-9">
+                    <div className="h-1.5 w-full overflow-hidden border border-border/60 bg-background/70">
+                      <div
+                        className={full ? "h-full bg-accent" : "h-full bg-primary"}
+                        style={{ width: `${Math.min(100, (c / KILLS_PER_UBER) * 100)}%` }}
+                      />
+                    </div>
+                    <div
+                      className={`font-hud text-[10px] ${full ? "text-accent" : "text-muted-foreground"}`}
+                    >
+                      {Math.min(c, KILLS_PER_UBER)}/{KILLS_PER_UBER}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {g.papUnlocked && (
+              <div className="font-grunge text-xs uppercase tracking-[0.2em] text-accent animate-pulse">
+                pack-a-punch attivo
+              </div>
+            )}
+          </div>
+
+
           {/* perks owned (above health bar) */}
           {g.perks.length > 0 && (
             <div className="absolute bottom-36 left-4 flex gap-1.5 sm:bottom-16">
