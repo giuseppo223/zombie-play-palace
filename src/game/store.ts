@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { world } from "./world";
 import { gates, ZONE_NAMES } from "./zones";
+import { COST_PAP } from "./uber";
 
 export type Phase = "menu" | "playing" | "dead";
 
@@ -110,6 +111,14 @@ type GameState = {
   openGate: (id: number) => void;
   applyPickup: (k: PickupKind) => void;
   syncBoosts: (b: Boosts) => void;
+  /** charge of the 4 Überschnalle, mirrored for the HUD */
+  uberCharges: number[];
+  /** true when all 4 buckles are charged and Pack-a-Punch is live */
+  papUnlocked: boolean;
+  /** current weapon has been Pack-a-Punched */
+  upgraded: boolean;
+  syncUbers: (c: number[], unlocked: boolean) => void;
+  buyPap: () => void;
 };
 
 export const useGame = create<GameState>((set, get) => ({
@@ -149,14 +158,52 @@ export const useGame = create<GameState>((set, get) => ({
     });
     world.shake = Math.max(world.shake, 0.4);
   },
+  uberCharges: [0, 0, 0, 0],
+  papUnlocked: false,
+  upgraded: false,
+  syncUbers: (uberCharges, papUnlocked) => {
+    const s = get();
+    if (papUnlocked && !s.papUnlocked) {
+      set({ notice: "PACK-A-PUNCH ATTIVO!" });
+      world.shake = Math.max(world.shake, 0.7);
+    }
+    set({ uberCharges, papUnlocked });
+  },
+  buyPap: () => {
+    const s = get();
+    if (!s.papUnlocked) return set({ notice: "Carica prima le 4 Überschnalle" });
+    if (s.upgraded) return set({ notice: "Arma già potenziata" });
+    if (s.points < COST_PAP) return set({ notice: "Punti insufficienti" });
+    const base = WEAPONS[s.weapon] ?? WEAPONS[0]!;
+    set({
+      points: s.points - COST_PAP,
+      upgraded: true,
+      ammo: Math.round(base.mag * 1.5),
+      reserve: Math.round(base.mag * 1.5) * (base.mags + 2),
+      reloading: false,
+      notice: `${base.name} potenziata!`,
+    });
+    world.reloadTimer = 0;
+    world.shake = Math.max(world.shake, 0.5);
+  },
   weaponDef: () => {
     const s = get();
     const base = WEAPONS[s.weapon] ?? WEAPONS[0]!;
-    if (s.perks.length === 0) return base;
+    const up = s.upgraded
+      ? {
+          ...base,
+          name: `${base.name} Ultra`,
+          damage: base.damage * 2.5,
+          mag: Math.round(base.mag * 1.5),
+          spread: base.spread * 0.7,
+          pierce: true,
+        }
+      : base;
+    if (s.perks.length === 0) return up;
     return {
-      ...base,
-      fireRate: s.perks.includes("doubletap") ? base.fireRate * 0.7 : base.fireRate,
-      reload: s.perks.includes("speed") ? base.reload * 0.5 : base.reload,
+      ...up,
+      fireRate: s.perks.includes("doubletap") ? up.fireRate * 0.7 : up.fireRate,
+      reload: s.perks.includes("speed") ? up.reload * 0.5 : up.reload,
     };
   },
   start: () =>

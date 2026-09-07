@@ -220,6 +220,7 @@ export function resolveCollisions(pos: THREE.Vector3, radius: number) {
 
 export function resetWorld() {
   resetGates();
+  resetUbers();
   world.yaw = 0;
   world.playerPos.set(0, 0, 0);
   world.playerVel.set(0, 0, 0);
