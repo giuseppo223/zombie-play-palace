@@ -3,6 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { world, input, resolveCollisions, forward, type Zombie } from "./world";
 import { gates, zoneAt } from "./zones";
+import { ubers, feedKill, allUbersCharged, uberCharged, PAP_POS, UBER_RADIUS } from "./uber";
 import { useGame, type PickupKind, type PerkId } from "./store";
 import { useUi, STATION_POS, BOX_POS, PERK_POSITIONS, type Zone } from "./ui-store";
 
@@ -116,6 +117,17 @@ export function Player() {
         } else {
           g.addKill(h.head ? 160 : 90);
           tryDrop(z.pos);
+        }
+        // souls feed the nearest Überschnalle
+        const u = feedKill(z.pos);
+        if (u) {
+          const g2 = useGame.getState();
+          const charged = allUbersCharged();
+          g2.syncUbers(
+            ubers.map((x) => x.charge),
+            charged,
+          );
+          if (uberCharged(u) && !charged) useGame.setState({ notice: `${u.name} carica!` });
         }
       } else {
         g.addHit(h.head ? 40 : 15);
