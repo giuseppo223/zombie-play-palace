@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { collideWalls, nearGate, resetGates } from "./zones";
+import { resetUbers } from "./uber";
 
 export type Zombie = {
   active: boolean;
@@ -121,6 +122,12 @@ export const POI = {
   station: { x: 8, z: 8 },
   /** mystery box sits in the first unlockable zone (east quarter) */
   box: { x: 26, z: 22 },
+  /** pack-a-punch in the central square */
+  pap: { x: -10, z: -7 },
+  uberA: { x: Math.cos((28 * Math.PI) / 180) * 37, z: Math.sin((28 * Math.PI) / 180) * 37 },
+  uberB: { x: Math.cos((118 * Math.PI) / 180) * 40, z: Math.sin((118 * Math.PI) / 180) * 40 },
+  uberC: { x: Math.cos((212 * Math.PI) / 180) * 61, z: Math.sin((212 * Math.PI) / 180) * 61 },
+  uberD: { x: Math.cos((303 * Math.PI) / 180) * 64, z: Math.sin((303 * Math.PI) / 180) * 64 },
 };
 
 /** Each perk machine stands alone in its own corner of the city. */
@@ -213,6 +220,7 @@ export function resolveCollisions(pos: THREE.Vector3, radius: number) {
 
 export function resetWorld() {
   resetGates();
+  resetUbers();
   world.yaw = 0;
   world.playerPos.set(0, 0, 0);
   world.playerVel.set(0, 0, 0);

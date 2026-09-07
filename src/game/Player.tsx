@@ -3,6 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { world, input, resolveCollisions, forward, type Zombie } from "./world";
 import { gates, zoneAt } from "./zones";
+import { ubers, feedKill, allUbersCharged, uberCharged, PAP_POS, UBER_RADIUS } from "./uber";
 import { useGame, type PickupKind, type PerkId } from "./store";
 import { useUi, STATION_POS, BOX_POS, PERK_POSITIONS, type Zone } from "./ui-store";
 
@@ -117,6 +118,17 @@ export function Player() {
           g.addKill(h.head ? 160 : 90);
           tryDrop(z.pos);
         }
+        // souls feed the nearest Überschnalle
+        const u = feedKill(z.pos);
+        if (u) {
+          const g2 = useGame.getState();
+          const charged = allUbersCharged();
+          g2.syncUbers(
+            ubers.map((x) => x.charge),
+            charged,
+          );
+          if (uberCharged(u) && !charged) useGame.setState({ notice: `${u.name} carica!` });
+        }
       } else {
         g.addHit(h.head ? 40 : 15);
       }
@@ -206,14 +218,25 @@ export function Player() {
       let zone: Zone = null;
       let perk: PerkId | null = null;
       let gateId = -1;
+      let uberId = -1;
       if (Math.hypot(px - STATION_POS.x, pz - STATION_POS.z) < 4) zone = "station";
       else if (Math.hypot(px - BOX_POS.x, pz - BOX_POS.z) < 4) zone = "box";
+      else if (Math.hypot(px - PAP_POS.x, pz - PAP_POS.z) < 4) zone = "pap";
       else {
         for (const s of PERK_POSITIONS) {
           if (Math.hypot(px - s.x, pz - s.z) < 3.5) {
             zone = "perks";
             perk = s.id;
             break;
+          }
+        }
+        if (!zone) {
+          for (const u of ubers) {
+            if (Math.hypot(px - u.x, pz - u.z) < UBER_RADIUS) {
+              zone = "uber";
+              uberId = u.id;
+              break;
+            }
           }
         }
         if (!zone) {
@@ -227,8 +250,13 @@ export function Player() {
         }
       }
       const ustate = useUi.getState();
-      if (zone !== ustate.zone || perk !== ustate.perk || gateId !== ustate.gate)
-        ustate.setZone(zone, perk, gateId);
+      if (
+        zone !== ustate.zone ||
+        perk !== ustate.perk ||
+        gateId !== ustate.gate ||
+        uberId !== ustate.uber
+      )
+        ustate.setZone(zone, perk, gateId, uberId);
       const zid = zoneAt(px, pz);
       if (zid !== g.zoneId) g.setZoneId(zid);
 

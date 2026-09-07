@@ -3,6 +3,7 @@ import { useGame, COST_AMMO, COST_HEAL, COST_BOX, WEAPONS, PERKS, PICKUP_LABEL }
 import { useUi } from "./ui-store";
 import { input, world, resetWorld } from "./world";
 import { gates, ZONE_NAMES } from "./zones";
+import { ubers, KILLS_PER_UBER, COST_PAP } from "./uber";
 
 function BuyRow({
   label,
@@ -36,6 +37,7 @@ export function HUD() {
   const zone = useUi((s) => s.zone);
   const nearPerk = useUi((s) => s.perk);
   const nearGate = useUi((s) => s.gate);
+  const nearUber = useUi((s) => s.uber);
   const activeBoosts = (["instakill", "double", "speed"] as const).filter((k) => g.boosts[k] > 0);
   const [hurtPulse, setHurtPulse] = useState(0);
   const lastHealth = useRef(g.health);
@@ -162,6 +164,39 @@ export function HUD() {
             </div>
           </div>
 
+          {/* Überschnalle charge tracker */}
+          <div className="absolute bottom-36 right-4 space-y-1 text-right sm:bottom-16">
+            <div className="font-hud text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+              überschnalle
+            </div>
+            <div className="flex justify-end gap-1.5">
+              {g.uberCharges.map((c, i) => {
+                const full = c >= KILLS_PER_UBER;
+                return (
+                  <div key={i} className="w-9">
+                    <div className="h-1.5 w-full overflow-hidden border border-border/60 bg-background/70">
+                      <div
+                        className={full ? "h-full bg-accent" : "h-full bg-primary"}
+                        style={{ width: `${Math.min(100, (c / KILLS_PER_UBER) * 100)}%` }}
+                      />
+                    </div>
+                    <div
+                      className={`font-hud text-[10px] ${full ? "text-accent" : "text-muted-foreground"}`}
+                    >
+                      {Math.min(c, KILLS_PER_UBER)}/{KILLS_PER_UBER}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {g.papUnlocked && (
+              <div className="font-grunge text-xs uppercase tracking-[0.2em] text-accent animate-pulse">
+                pack-a-punch attivo
+              </div>
+            )}
+          </div>
+
+
           {/* perks owned (above health bar) */}
           {g.perks.length > 0 && (
             <div className="absolute bottom-36 left-4 flex gap-1.5 sm:bottom-16">
@@ -227,6 +262,51 @@ export function HUD() {
                 hotkey="1 / E"
                 onBuy={() => g.buyBox()}
               />
+            </div>
+          )}
+
+          {/* Überschnalle panel */}
+          {zone === "uber" &&
+            (() => {
+              const u = ubers[nearUber];
+              if (!u) return null;
+              const left = Math.max(0, KILLS_PER_UBER - u.charge);
+              return (
+                <div className="pointer-events-none absolute left-1/2 top-1/2 w-72 -translate-x-1/2 translate-y-8 space-y-1.5 text-center">
+                  <div className="font-hud text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                    {u.name}
+                  </div>
+                  <div className="border border-border/60 bg-card/70 px-3 py-2 font-hud text-sm text-foreground">
+                    {left > 0
+                      ? `Uccidi ${left} zombie qui per caricarla`
+                      : "Carica — torna al Pack-a-Punch"}
+                  </div>
+                </div>
+              );
+            })()}
+
+          {/* pack-a-punch panel */}
+          {zone === "pap" && (
+            <div className="pointer-events-auto absolute left-1/2 top-1/2 w-72 -translate-x-1/2 translate-y-8 space-y-1.5">
+              <div className="font-hud text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                pack-a-punch
+              </div>
+              {!g.papUnlocked ? (
+                <div className="border border-destructive/50 bg-card/70 px-3 py-2 font-hud text-sm text-destructive">
+                  Spento — carica tutte e 4 le Überschnalle
+                </div>
+              ) : g.upgraded ? (
+                <div className="border border-border/60 bg-card/70 px-3 py-2 font-hud text-sm text-accent">
+                  {g.weaponDef().name} — già potenziata
+                </div>
+              ) : (
+                <BuyRow
+                  label="Potenzia arma"
+                  cost={`${COST_PAP}`}
+                  hotkey="1 / E"
+                  onBuy={() => g.buyPap()}
+                />
+              )}
             </div>
           )}
 
