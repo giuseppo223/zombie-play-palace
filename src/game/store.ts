@@ -305,6 +305,7 @@ export const useGame = create<GameState>((set, get) => ({
     set({
       points: s.points - COST_BOX,
       weapon: next,
+      upgraded: false,
       ammo: w.mag,
       reserve: w.mag * w.mags,
       reloading: false,
