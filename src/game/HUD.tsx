@@ -37,6 +37,7 @@ export function HUD() {
   const zone = useUi((s) => s.zone);
   const nearPerk = useUi((s) => s.perk);
   const nearGate = useUi((s) => s.gate);
+  const nearUber = useUi((s) => s.uber);
   const activeBoosts = (["instakill", "double", "speed"] as const).filter((k) => g.boosts[k] > 0);
   const [hurtPulse, setHurtPulse] = useState(0);
   const lastHealth = useRef(g.health);
@@ -261,6 +262,51 @@ export function HUD() {
                 hotkey="1 / E"
                 onBuy={() => g.buyBox()}
               />
+            </div>
+          )}
+
+          {/* Überschnalle panel */}
+          {zone === "uber" &&
+            (() => {
+              const u = ubers[nearUber];
+              if (!u) return null;
+              const left = Math.max(0, KILLS_PER_UBER - u.charge);
+              return (
+                <div className="pointer-events-none absolute left-1/2 top-1/2 w-72 -translate-x-1/2 translate-y-8 space-y-1.5 text-center">
+                  <div className="font-hud text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                    {u.name}
+                  </div>
+                  <div className="border border-border/60 bg-card/70 px-3 py-2 font-hud text-sm text-foreground">
+                    {left > 0
+                      ? `Uccidi ${left} zombie qui per caricarla`
+                      : "Carica — torna al Pack-a-Punch"}
+                  </div>
+                </div>
+              );
+            })()}
+
+          {/* pack-a-punch panel */}
+          {zone === "pap" && (
+            <div className="pointer-events-auto absolute left-1/2 top-1/2 w-72 -translate-x-1/2 translate-y-8 space-y-1.5">
+              <div className="font-hud text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                pack-a-punch
+              </div>
+              {!g.papUnlocked ? (
+                <div className="border border-destructive/50 bg-card/70 px-3 py-2 font-hud text-sm text-destructive">
+                  Spento — carica tutte e 4 le Überschnalle
+                </div>
+              ) : g.upgraded ? (
+                <div className="border border-border/60 bg-card/70 px-3 py-2 font-hud text-sm text-accent">
+                  {g.weaponDef().name} — già potenziata
+                </div>
+              ) : (
+                <BuyRow
+                  label="Potenzia arma"
+                  cost={`${COST_PAP}`}
+                  hotkey="1 / E"
+                  onBuy={() => g.buyPap()}
+                />
+              )}
             </div>
           )}
 
