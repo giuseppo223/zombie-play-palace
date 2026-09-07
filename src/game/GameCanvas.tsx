@@ -3,6 +3,7 @@ import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 import { City } from "./City";
 import { ZoneWalls } from "./Zones";
+import { UberSystem } from "./Uber";
 import { Player } from "./Player";
 import { ZombieSystem } from "./Zombies";
 import { Atmosphere, Station, Tracers, Pickups, MysteryBox, PerkMachines } from "./Effects";
