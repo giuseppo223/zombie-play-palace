@@ -37,6 +37,8 @@ function useInputBindings() {
         if (use) g.buyPerk(nearPerk);
       } else if (zone === "gate" && nearGate >= 0) {
         if (use) g.openGate(nearGate);
+      } else if (zone === "pap") {
+        if (use) g.buyPap();
       }
     };
     const onUp = (e: KeyboardEvent) => {
@@ -107,6 +109,7 @@ export function GameCanvas() {
           <ZoneWalls />
           <Station />
           <MysteryBox />
+          <UberSystem />
           <PerkMachines />
           <Pickups />
           <Player />
