@@ -3,6 +3,7 @@ import { useGame, COST_AMMO, COST_HEAL, COST_BOX, WEAPONS, PERKS, PICKUP_LABEL }
 import { useUi } from "./ui-store";
 import { input, world, resetWorld } from "./world";
 import { gates, ZONE_NAMES } from "./zones";
+import { ubers, KILLS_PER_UBER, COST_PAP } from "./uber";
 
 function BuyRow({
   label,
