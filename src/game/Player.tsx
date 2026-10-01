@@ -206,6 +206,26 @@ export function Player() {
         world.reloadTimer = g.weaponDef().reload;
       }
 
+      // Quick Revive: steady health regeneration
+      if (g.perks.includes("revive") && g.health > 0 && g.health < g.maxHealth) g.heal(4 * delta);
+
+      // Electric Cherry: a shock around the player every time a reload starts
+      if (g.reloading && !wasReloading.current && g.perks.includes("cherry")) {
+        world.shake = Math.max(world.shake, 0.35);
+        for (const z of world.zombies) {
+          if (z.dying > 0 || z.pos.distanceTo(world.playerPos) > 5) continue;
+          z.hp -= z.boss ? z.maxHp * 0.05 : 4 + g.round * 0.6;
+          z.hitFlash = 1;
+          if (z.hp <= 0) {
+            z.dying = 0.001;
+            g.addKill(z.boss ? 1500 : 70);
+            const c = feedKill(z.pos);
+            if (c) useGame.getState().syncUbers(ubers.map((u) => u.charge), allUbersCharged());
+          }
+        }
+      }
+      wasReloading.current = g.reloading;
+
       world.fireCd -= delta;
       const def = g.weaponDef();
       if (input.firing && world.fireCd <= 0) {
