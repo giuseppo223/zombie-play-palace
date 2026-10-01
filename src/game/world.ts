@@ -131,14 +131,14 @@ export const POI = {
 };
 
 /** Each perk machine stands alone in its own corner of the city. */
-export const PERK_SPOTS: { id: "jugger" | "speed" | "doubletap" | "stamin"; x: number; z: number }[] =
+export const PERK_SPOTS: { id: "jugger" | "speed" | "doubletap" | "stamin" | "revive" | "deadshot" | "vulture" | "cherry"; x: number; z: number }[] =
   (() => {
-    const ids = ["jugger", "speed", "doubletap", "stamin"] as const;
+    const ids = ["jugger", "speed", "doubletap", "stamin", "revive", "deadshot", "vulture", "cherry"] as const;
     let seed = 909;
     return ids.map((id, i) => {
       // keep clear of the zone walls (radial walls every 45°, ring walls at r=20/50/82)
-      const a = (i / ids.length) * Math.PI * 2 + 0.25 + rand(seed++) * 0.3;
-      const r = i % 2 === 0 ? 27 + rand(seed++) * 18 : 56 + rand(seed++) * 20;
+      const a = (i / ids.length) * Math.PI * 2 + 0.2 + rand(seed++) * 0.2;
+      const r = i % 2 === 0 ? 28 + rand(seed++) * 16 : 57 + rand(seed++) * 18;
       return { id, x: Math.cos(a) * r, z: Math.sin(a) * r };
     });
   })();
