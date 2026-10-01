@@ -165,39 +165,26 @@ for (let j = 0; j < 8; j++) {
   radialWithGate((j * Math.PI) / 4, R_MID, R_OUTER, prev, 5 + j);
 }
 
-/**
- * Openable gates form two paths out of the central square so that every
- * zone has one or two working gates and the rest stay locked:
- *   centro -> Est -> Porto -> Industriale -> Ospedale -> Ferrovia -> Nord
- *   centro -> Sud -> Cantiere -> Periferia -> Mercato -> Cimitero -> Ovest
- */
-const OPENABLE: Record<number, number> = {
-  0: 500, // centro - est
-  3: 500, // centro - sud
-  8: 1000, // est - porto
-  15: 1000, // sud - cantiere
-  17: 1250, // porto - industriale
-  23: 1250, // cantiere - periferia
-  18: 1500, // industriale - ospedale
-  22: 1500, // periferia - mercato
-  19: 1750, // ospedale - ferrovia
-  21: 1750, // mercato - cimitero
-  11: 2000, // ferrovia - nord
-  12: 2000, // cimitero - ovest
-};
-for (const g of gates) {
-  const c = OPENABLE[g.id];
-  if (c !== undefined) {
+/** Every gate opens; each one opened raises the price of the next, up to 10000. */
+export const GATE_COST_MIN = 500;
+export const GATE_COST_MAX = 10000;
+export function refreshGateCosts() {
+  const opened = gates.filter((g) => g.open).length;
+  const step = (GATE_COST_MAX - GATE_COST_MIN) / Math.max(1, gates.length - 1);
+  const cost = Math.min(GATE_COST_MAX, Math.round((GATE_COST_MIN + opened * step) / 50) * 50);
+  for (const g of gates) {
     g.openable = true;
-    g.cost = c;
+    g.cost = cost;
   }
 }
+refreshGateCosts();
 
 export function resetGates() {
   for (const g of gates) {
     g.open = false;
     g.anim = 0;
   }
+  refreshGateCosts();
 }
 
 /** Zone ids the player can currently reach from the center. */

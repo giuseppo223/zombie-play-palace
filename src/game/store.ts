@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { world } from "./world";
-import { gates, ZONE_NAMES } from "./zones";
+import { gates, ZONE_NAMES, refreshGateCosts } from "./zones";
 import { COST_PAP } from "./uber";
 
 export type Phase = "menu" | "playing" | "dead";
@@ -42,12 +42,16 @@ export const WEAPONS: WeaponDef[] = [
   { name: "Thundergun", mag: 2, damage: 25, fireRate: 1, reload: 3.4, spread: 0.12, auto: false, mags: 6, pellets: 10, pierce: true },
 ];
 
-export type PerkId = "jugger" | "speed" | "doubletap" | "stamin";
+export type PerkId = "jugger" | "speed" | "doubletap" | "stamin" | "revive" | "deadshot" | "vulture" | "cherry";
 export const PERKS: { id: PerkId; name: string; desc: string; cost: number; color: string }[] = [
   { id: "jugger", name: "Juggernog", desc: "Vita massima 200", cost: 2500, color: "#c2413c" },
   { id: "speed", name: "Speed Cola", desc: "Ricarica 2x più veloce", cost: 3000, color: "#4fa66b" },
   { id: "doubletap", name: "Double Tap", desc: "Cadenza di fuoco +40%", cost: 2000, color: "#e8c07a" },
   { id: "stamin", name: "Stamin-Up", desc: "Corsa più veloce", cost: 2000, color: "#e0c94a" },
+  { id: "revive", name: "Quick Revive", desc: "Rigenera 4 vita al secondo", cost: 1500, color: "#6fb3d9" },
+  { id: "deadshot", name: "Deadshot", desc: "Colpi alla testa danno x2", cost: 2000, color: "#8a8f99" },
+  { id: "vulture", name: "Vulture Aid", desc: "+30% punti per colpi e uccisioni", cost: 3000, color: "#9c6b3a" },
+  { id: "cherry", name: "Electric Cherry", desc: "Ricaricare rilascia una scossa elettrica", cost: 2000, color: "#4fd1e8" },
 ];
 
 export type PickupKind = "maxammo" | "instakill" | "double" | "nuke" | "speed";
@@ -148,9 +152,9 @@ export const useGame = create<GameState>((set, get) => ({
     const s = get();
     const gate = gates[id];
     if (!gate || gate.open) return;
-    if (!gate.openable) return set({ notice: "Cancello saldato: non si apre" });
-    if (s.points < gate.cost) return set({ notice: "Punti insufficienti" });
+        if (s.points < gate.cost) return set({ notice: "Punti insufficienti" });
     gate.open = true;
+    refreshGateCosts();
     set({
       points: s.points - gate.cost,
       gatesOpened: s.gatesOpened + 1,
@@ -248,11 +252,13 @@ export const useGame = create<GameState>((set, get) => ({
     set({ ammo: s.ammo + take, reserve: s.reserve - take, reloading: false });
   },
   addHit: (points) => {
-    const p = world.boost.double > 0 ? points * 2 : points;
+    let p = world.boost.double > 0 ? points * 2 : points;
+    if (get().perks.includes("vulture")) p = Math.round(p * 1.3);
     set({ points: get().points + p, score: get().score + p });
   },
   addKill: (points) => {
-    const p = world.boost.double > 0 ? points * 2 : points;
+    let p = world.boost.double > 0 ? points * 2 : points;
+    if (get().perks.includes("vulture")) p = Math.round(p * 1.3);
     set({ kills: get().kills + 1, points: get().points + p, score: get().score + p });
   },
   setRound: (round) => set({ round, roundBanner: 2.5 }),
