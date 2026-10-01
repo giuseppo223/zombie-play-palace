@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { world } from "./world";
-import { gates, ZONE_NAMES } from "./zones";
+import { gates, ZONE_NAMES, refreshGateCosts } from "./zones";
 import { COST_PAP } from "./uber";
 
 export type Phase = "menu" | "playing" | "dead";
