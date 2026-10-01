@@ -84,7 +84,6 @@ function GateMesh({ gate }: { gate: Gate }) {
         <boxGeometry args={[0.5, 0.25, 0.25]} />
         <meshStandardMaterial ref={lamp} color={color} emissive={color} emissiveIntensity={1.6} />
       </mesh>
-      <pointLight ref={light} position={[0, WALL_H + 0.6, 0]} color={color} intensity={6} distance={12} decay={2} />
 
       {/* portcullis bars, slide up when opened */}
       <group ref={bars}>

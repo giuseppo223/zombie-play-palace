@@ -84,7 +84,6 @@ function UberMesh({ uber }: { uber: Uber }) {
         <meshBasicMaterial color={FULL} transparent opacity={0.12} side={THREE.DoubleSide} />
       </mesh>
 
-      <pointLight ref={light} position={[0, 2.2, 0]} color={IDLE} intensity={8} distance={20} decay={2} />
     </group>
   );
 }
@@ -133,7 +132,6 @@ function PackAPunch() {
           <meshStandardMaterial color="#4a2f1f" roughness={0.9} metalness={0.4} />
         </mesh>
       ))}
-      <pointLight ref={light} position={[0, 2.5, 0.8]} color="#4fa66b" intensity={0} distance={18} decay={2} />
     </group>
   );
 }
