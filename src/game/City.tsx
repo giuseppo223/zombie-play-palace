@@ -46,14 +46,14 @@ export function City() {
   const lamps = useMemo(() => {
     const out: { x: number; z: number; lit: boolean }[] = [];
     const rings = [
-      { r: 15, n: 10, every: 1 },
-      { r: 42, n: 14, every: 2 },
-      { r: 68, n: 18, every: 3 },
+      { r: 15, n: 10, every: 2 },
+      { r: 42, n: 14, every: 99 },
+      { r: 68, n: 18, every: 99 },
     ];
     rings.forEach(({ r, n, every }, ri) => {
       for (let i = 0; i < n; i++) {
         const a = (i / n) * Math.PI * 2 + ri * 0.3;
-        out.push({ x: Math.cos(a) * r, z: Math.sin(a) * r, lit: i % every === 0 });
+        out.push({ x: Math.cos(a) * r, z: Math.sin(a) * r, lit: i % every === 0 && every < 99 });
       }
     });
     return out;
