@@ -18,7 +18,8 @@
 
 - [x] Mappa divisa in 13 zone murate con 24 cancelli: 12 apribili a punti (1-2 per zona), gli altri saldati
 
+- [x] 4 Überschnalle (15 uccisioni vicino ciascuna) che sbloccano il Pack-a-Punch
+
 ## Idee future
 
 - [ ] Minimappa / indicatori direzione verso cassa e perk
-- [ ] Pack-a-Punch per potenziare l'arma attuale
