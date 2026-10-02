@@ -53,6 +53,9 @@ export const input = {
   aimX: 0,
 };
 
+/** whether the player chose to play with a PlayStation controller */
+export const controlPrefs = { pad: false };
+
 export const world = {
   yaw: 0,
   playerPos: new THREE.Vector3(0, 0, 0),
