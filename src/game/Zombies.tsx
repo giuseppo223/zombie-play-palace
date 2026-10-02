@@ -255,6 +255,7 @@ export function ZombieSystem() {
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05);
     const g = useGame.getState();
+    const widow = g.perks.includes("widow");
     if (g.phase !== "playing") return;
 
     const activeCount = world.zombies.filter((z) => z.active && z.dying === 0).length;
