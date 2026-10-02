@@ -49,6 +49,7 @@ export function Player() {
 
   const torchTarget = useMemo(() => new THREE.Object3D(), []);
   const anim = useRef({ moveBlend: 0, lean: 0, recoil: 0, reloadT: 0 });
+  const wasReloading = useRef(false);
 
   const v = useMemo(
     () => ({
