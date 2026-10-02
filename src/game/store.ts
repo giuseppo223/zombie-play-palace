@@ -42,7 +42,7 @@ export const WEAPONS: WeaponDef[] = [
   { name: "Thundergun", mag: 2, damage: 25, fireRate: 1, reload: 3.4, spread: 0.12, auto: false, mags: 6, pellets: 10, pierce: true },
 ];
 
-export type PerkId = "jugger" | "speed" | "doubletap" | "stamin" | "revive" | "deadshot" | "vulture" | "cherry";
+export type PerkId = "jugger" | "speed" | "doubletap" | "stamin" | "revive" | "deadshot" | "vulture" | "cherry" | "mule" | "phd" | "widow";
 export const PERKS: { id: PerkId; name: string; desc: string; cost: number; color: string }[] = [
   { id: "jugger", name: "Juggernog", desc: "Vita massima 200", cost: 2500, color: "#c2413c" },
   { id: "speed", name: "Speed Cola", desc: "Ricarica 2x più veloce", cost: 3000, color: "#4fa66b" },
@@ -52,6 +52,9 @@ export const PERKS: { id: PerkId; name: string; desc: string; cost: number; colo
   { id: "deadshot", name: "Deadshot", desc: "Colpi alla testa danno x2", cost: 2000, color: "#8a8f99" },
   { id: "vulture", name: "Vulture Aid", desc: "+30% punti per colpi e uccisioni", cost: 3000, color: "#9c6b3a" },
   { id: "cherry", name: "Electric Cherry", desc: "Ricaricare rilascia una scossa elettrica", cost: 2000, color: "#4fd1e8" },
+  { id: "mule", name: "Mule Kick", desc: "Caricatore +50%", cost: 2500, color: "#5e8f3a" },
+  { id: "phd", name: "PhD Flopper", desc: "Danno subito -35%", cost: 2500, color: "#b04fc2" },
+  { id: "widow", name: "Widow's Wine", desc: "Zombie vicini rallentati del 50%", cost: 3000, color: "#3a3a52" },
 ];
 
 export type PickupKind = "maxammo" | "instakill" | "double" | "nuke" | "speed";
@@ -208,6 +211,7 @@ export const useGame = create<GameState>((set, get) => ({
       ...up,
       fireRate: s.perks.includes("doubletap") ? up.fireRate * 0.7 : up.fireRate,
       reload: s.perks.includes("speed") ? up.reload * 0.5 : up.reload,
+      mag: s.perks.includes("mule") ? Math.round(up.mag * 1.5) : up.mag,
     };
   },
   start: () =>
@@ -238,6 +242,7 @@ export const useGame = create<GameState>((set, get) => ({
   die: () => set({ phase: "dead", best: Math.max(get().best, get().score) }),
   toMenu: () => set({ phase: "menu" }),
   damage: (n) => {
+    if (get().perks.includes("phd")) n *= 0.65;
     const h = Math.max(0, get().health - n);
     set({ health: h });
     if (h <= 0 && get().phase === "playing") get().die();
