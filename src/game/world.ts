@@ -131,9 +131,9 @@ export const POI = {
 };
 
 /** Each perk machine stands alone in its own corner of the city. */
-export const PERK_SPOTS: { id: "jugger" | "speed" | "doubletap" | "stamin" | "revive" | "deadshot" | "vulture" | "cherry"; x: number; z: number }[] =
+export const PERK_SPOTS: { id: "jugger" | "speed" | "doubletap" | "stamin" | "revive" | "deadshot" | "vulture" | "cherry" | "mule" | "phd" | "widow"; x: number; z: number }[] =
   (() => {
-    const ids = ["jugger", "speed", "doubletap", "stamin", "revive", "deadshot", "vulture", "cherry"] as const;
+    const ids = ["jugger", "speed", "doubletap", "stamin", "revive", "deadshot", "vulture", "cherry", "mule", "phd", "widow"] as const;
     let seed = 909;
     return ids.map((id, i) => {
       // keep clear of the zone walls (radial walls every 45°, ring walls at r=20/50/82)

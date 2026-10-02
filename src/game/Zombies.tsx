@@ -336,7 +336,10 @@ export function ZombieSystem() {
             z.stuck = 0;
           }
         } else z.stuck = 0;
-        z.pos.addScaledVector(dirs.toPlayer, z.speed * delta);
+        z.pos.addScaledVector(
+          dirs.toPlayer,
+          z.speed * delta * (widow && z.pos.distanceTo(world.playerPos) < 4 ? 0.5 : 1),
+        );
         resolveCollisions(z.pos, z.boss ? 0.9 : 0.45);
       } else if (z.attackCd <= 0) {
         z.attackCd = z.boss ? 1.6 : 1.1;
