@@ -126,7 +126,6 @@ export function PerkMachines() {
               <sphereGeometry args={[0.16, 10, 10]} />
               <meshBasicMaterial color={p.color} toneMapped={false} />
             </mesh>
-            <pointLight position={[0, 1.8, 0.9]} color={p.color} intensity={14} distance={9} decay={2} />
           </group>
         );
       })}
