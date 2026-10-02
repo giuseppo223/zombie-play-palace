@@ -34,7 +34,7 @@ export type Pickup = {
   life: number;
 };
 
-export type Obstacle = { x: number; z: number; hx: number; hz: number };
+export type Obstacle = { x: number; z: number; hx: number; hz: number; rot?: number };
 
 export const ARENA_RADIUS = 82;
 export const MAX_ZOMBIES = 40;
@@ -194,21 +194,50 @@ export const props: Prop[] = (() => {
 })();
 
 props.forEach((p) => {
-  if (p.kind === "car") world.obstacles.push({ x: p.x, z: p.z, hx: 1.2, hz: 2.4 });
-  else world.obstacles.push({ x: p.x, z: p.z, hx: 0.6, hz: 0.6 });
+  if (p.kind === "car") world.obstacles.push({ x: p.x, z: p.z, hx: 1.0, hz: 2.2, rot: p.rot });
+  else if (p.kind === "crate") world.obstacles.push({ x: p.x, z: p.z, hx: 0.45, hz: 0.45, rot: p.rot });
+  else world.obstacles.push({ x: p.x, z: p.z, hx: 0.45, hz: 0.45 });
 });
+
+// street lamps (same layout as City.tsx)
+[
+  { r: 15, n: 10 },
+  { r: 42, n: 14 },
+  { r: 68, n: 18 },
+].forEach(({ r, n }, ri) => {
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + ri * 0.3;
+    world.obstacles.push({ x: Math.cos(a) * r, z: Math.sin(a) * r, hx: 0.15, hz: 0.15 });
+  }
+});
+
+// machines and devices: station, box, Pack-a-Punch, Überschnalle, perk machines
+for (const [k, p] of Object.entries(POI)) {
+  const h = k.startsWith("uber") ? 0.7 : 1.0;
+  world.obstacles.push({ x: p.x, z: p.z, hx: h, hz: h });
+}
+PERK_SPOTS.forEach((p) => world.obstacles.push({ x: p.x, z: p.z, hx: 0.65, hz: 0.65 }));
 
 /** Push a circle of `radius` out of every obstacle and keep it inside the arena. */
 export function resolveCollisions(pos: THREE.Vector3, radius: number) {
   collideWalls(pos, radius);
   for (const o of world.obstacles) {
-    const dx = pos.x - o.x;
-    const dz = pos.z - o.z;
+    const wx = pos.x - o.x;
+    const wz = pos.z - o.z;
+    const reach = Math.max(o.hx, o.hz) + radius + 0.5;
+    if (wx > reach || wx < -reach || wz > reach || wz < -reach) continue;
+    // move into the obstacle's local (rotated) frame
+    const c = o.rot ? Math.cos(o.rot) : 1;
+    const sn = o.rot ? Math.sin(o.rot) : 0;
+    let dx = wx * c - wz * sn;
+    let dz = wx * sn + wz * c;
     const ox = o.hx + radius - Math.abs(dx);
     const oz = o.hz + radius - Math.abs(dz);
     if (ox > 0 && oz > 0) {
-      if (ox < oz) pos.x += Math.sign(dx || 1) * ox;
-      else pos.z += Math.sign(dz || 1) * oz;
+      if (ox < oz) dx += Math.sign(dx || 1) * ox;
+      else dz += Math.sign(dz || 1) * oz;
+      pos.x = o.x + dx * c + dz * sn;
+      pos.z = o.z - dx * sn + dz * c;
     }
   }
   const d = Math.hypot(pos.x, pos.z);
