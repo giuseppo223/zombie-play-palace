@@ -7,7 +7,7 @@ import { UberSystem } from "./Uber";
 import { Player } from "./Player";
 import { ZombieSystem } from "./Zombies";
 import { Atmosphere, Station, Tracers, Pickups, MysteryBox, PerkMachines } from "./Effects";
-import { HUD, TouchControls } from "./HUD";
+import { HUD } from "./HUD";
 import { input, world } from "./world";
 import { useGame, PERKS } from "./store";
 import { useUi } from "./ui-store";
@@ -118,7 +118,6 @@ export function GameCanvas() {
         </Canvas>
       </div>
       <HUD />
-      <TouchControls />
     </div>
   );
 }
