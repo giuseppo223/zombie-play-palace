@@ -2,31 +2,24 @@ import { useRef, useState } from "react";
 import { input } from "./world";
 
 /** Brawl Stars-style touch controls: big move stick bottom-left,
- *  big fire button bottom-right, aim by dragging on the right half. */
+ *  fire/reload/use cluster low on the right. No look stick — the
+ *  view auto-faces the nearest zombie while firing. */
 export function TouchControls() {
   const moveId = useRef(-1);
-  const aimId = useRef(-1);
   const moveOrigin = useRef({ x: 0, y: 0 });
-  const aimOrigin = useRef({ x: 0, y: 0 });
   const [moveKnob, setMoveKnob] = useState({ x: 0, y: 0, active: false });
-  const [aimKnob, setAimKnob] = useState({ x: 0, y: 0, active: false });
   const R = 64; // stick travel radius px
 
   const key = (code: string, down: boolean) =>
     window.dispatchEvent(new KeyboardEvent(down ? "keydown" : "keyup", { code }));
 
   const onDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    const half = window.innerWidth / 2;
-    if (e.clientX < half && moveId.current < 0) {
+    if (e.clientX < window.innerWidth / 2 && moveId.current < 0) {
       moveId.current = e.pointerId;
       moveOrigin.current = { x: e.clientX, y: e.clientY };
       setMoveKnob({ x: 0, y: 0, active: true });
-    } else if (e.clientX >= half && aimId.current < 0) {
-      aimId.current = e.pointerId;
-      aimOrigin.current = { x: e.clientX, y: e.clientY };
-      setAimKnob({ x: 0, y: 0, active: true });
+      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
     }
-    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
   };
 
   const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -41,16 +34,6 @@ export function TouchControls() {
       input.moveX = dx;
       input.moveY = -dy;
       setMoveKnob({ x: dx * R, y: dy * R, active: true });
-    } else if (e.pointerId === aimId.current) {
-      let dx = (e.clientX - aimOrigin.current.x) / R;
-      let dy = (e.clientY - aimOrigin.current.y) / R;
-      const len = Math.hypot(dx, dy);
-      if (len > 1) {
-        dx /= len;
-        dy /= len;
-      }
-      input.aimX = Math.abs(dx) < 0.12 ? 0 : dx;
-      setAimKnob({ x: dx * R, y: dy * R, active: true });
     }
   };
 
@@ -60,18 +43,14 @@ export function TouchControls() {
       input.moveX = 0;
       input.moveY = 0;
       setMoveKnob({ x: 0, y: 0, active: false });
-    } else if (e.pointerId === aimId.current) {
-      aimId.current = -1;
-      input.aimX = 0;
-      setAimKnob({ x: 0, y: 0, active: false });
     }
   };
 
   return (
     <>
-      {/* touch surface for the two sticks */}
+      {/* touch surface for the move stick (left half only) */}
       <div
-        className="pointer-events-auto absolute inset-0 touch-none"
+        className="pointer-events-auto absolute inset-y-0 left-0 right-1/2 touch-none"
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={onUp}
@@ -87,30 +66,11 @@ export function TouchControls() {
             }}
           />
         </div>
-        {/* right aim pad */}
-        <div className="absolute bottom-10 right-8 h-44 w-44 rounded-full border-2 border-border/60 bg-card/40 backdrop-blur-sm">
-          <div
-            className="absolute left-1/2 top-1/2 h-20 w-20 rounded-full border-2 border-accent/70 bg-accent/40"
-            style={{
-              transform: `translate(calc(-50% + ${aimKnob.x}px), calc(-50% + ${aimKnob.y}px))`,
-              opacity: aimKnob.active ? 1 : 0.55,
-            }}
-          />
-        </div>
       </div>
 
-      {/* big fire button above the aim pad, Brawl Stars style */}
-      <div className="pointer-events-auto absolute bottom-60 right-10 flex flex-col items-center gap-3">
-        <button
-          className="h-24 w-24 rounded-full border-2 border-destructive bg-destructive/40 font-hud text-sm uppercase tracking-widest text-foreground shadow-[0_0_24px_var(--blood-glow)] active:bg-destructive/70"
-          onPointerDown={() => (input.firing = true)}
-          onPointerUp={() => (input.firing = false)}
-          onPointerCancel={() => (input.firing = false)}
-          onPointerLeave={() => (input.firing = false)}
-        >
-          Fuoco
-        </button>
-        <div className="flex gap-3">
+      {/* fire / reload / use cluster — low on the right, Brawl Stars style */}
+      <div className="pointer-events-auto absolute bottom-6 right-6 flex items-end gap-4">
+        <div className="flex flex-col gap-3">
           <button
             className="h-16 w-16 rounded-full border-2 border-border/70 bg-card/60 font-hud text-[10px] uppercase tracking-widest text-foreground active:bg-card"
             onPointerDown={() => key("KeyR", true)}
@@ -126,6 +86,15 @@ export function TouchControls() {
             Usa
           </button>
         </div>
+        <button
+          className="h-28 w-28 rounded-full border-2 border-destructive bg-destructive/40 font-hud text-sm uppercase tracking-widest text-foreground shadow-[0_0_24px_var(--blood-glow)] active:bg-destructive/70"
+          onPointerDown={() => (input.firing = true)}
+          onPointerUp={() => (input.firing = false)}
+          onPointerCancel={() => (input.firing = false)}
+          onPointerLeave={() => (input.firing = false)}
+        >
+          Fuoco
+        </button>
       </div>
     </>
   );
