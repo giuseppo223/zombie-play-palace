@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useGame, COST_AMMO, COST_HEAL, COST_BOX, WEAPONS, PERKS, PICKUP_LABEL } from "./store";
 import { useUi } from "./ui-store";
-import { input, world, resetWorld } from "./world";
+import { resetWorld, controlPrefs } from "./world";
+import { useGamepad } from "./Gamepad";
 import { gates, ZONE_NAMES } from "./zones";
 import { ubers, KILLS_PER_UBER, COST_PAP } from "./uber";
 
@@ -53,7 +54,23 @@ export function HUD() {
     return () => clearTimeout(t);
   }, [g.notice]);
 
-  const startGame = () => {
+  const [pad, setPad] = useState(controlPrefs.pad);
+  const [padConnected, setPadConnected] = useState(false);
+  useGamepad(pad);
+  useEffect(() => {
+    const upd = () => setPadConnected(Array.from(navigator.getGamepads?.() ?? []).some(Boolean));
+    upd();
+    window.addEventListener("gamepadconnected", upd);
+    window.addEventListener("gamepaddisconnected", upd);
+    return () => {
+      window.removeEventListener("gamepadconnected", upd);
+      window.removeEventListener("gamepaddisconnected", upd);
+    };
+  }, []);
+
+  const startGame = (withPad: boolean = pad) => {
+    controlPrefs.pad = withPad;
+    setPad(withPad);
     resetWorld();
     g.start();
     // on touch devices go fullscreen and try to lock landscape
@@ -371,15 +388,26 @@ export function HUD() {
             distributori perk. Gli zombie possono lasciare boost: Insta-Kill, Punti Doppi, Nuke,
             Munizioni Max, Velocità.
           </p>
-          <button
-            onClick={startGame}
-            className="mt-7 border border-destructive/70 bg-destructive/15 px-8 py-3 font-grunge text-xl uppercase tracking-[0.2em] text-foreground transition-colors hover:bg-destructive/35"
-          >
-            Inizia
-          </button>
-          <div className="mt-6 space-y-1 font-hud text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            <div className="hidden sm:block">WASD muovi · mouse gira · click spara · R ricarica</div>
-            <div className="sm:hidden">stick sinistro muovi · stick destro mira · FUOCO spara · meglio in orizzontale</div>
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+            <button
+              onClick={() => startGame(true)}
+              className="border border-accent/70 bg-accent/15 px-6 py-3 font-grunge text-lg uppercase tracking-[0.15em] text-foreground transition-colors hover:bg-accent/35"
+            >
+              Con controller PS
+            </button>
+            <button
+              onClick={() => startGame(false)}
+              className="border border-destructive/70 bg-destructive/15 px-6 py-3 font-grunge text-lg uppercase tracking-[0.15em] text-foreground transition-colors hover:bg-destructive/35"
+            >
+              Senza controller
+            </button>
+          </div>
+          <div className="mt-3 font-hud text-xs uppercase tracking-[0.2em] text-accent">
+            {padConnected ? "controller collegato" : "collega il controller e premi un tasto"}
+          </div>
+          <div className="mt-4 space-y-1 font-hud text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            <div>Controller: L muovi · R mira · R2 spara · □ ricarica · ✕ usa/compra · △ cura</div>
+            <div>Tastiera: WASD muovi · mouse gira · click spara · R ricarica · E usa</div>
           </div>
         </div>
       )}
@@ -408,7 +436,7 @@ export function HUD() {
             </div>
           </div>
           <button
-            onClick={startGame}
+            onClick={() => startGame()}
             className="mt-8 border border-destructive/70 bg-destructive/15 px-8 py-3 font-grunge text-xl uppercase tracking-[0.2em] text-foreground transition-colors hover:bg-destructive/35"
           >
             Riprova
@@ -422,139 +450,3 @@ export function HUD() {
   );
 }
 
-/** Touch stick + fire button, shown on small screens. */
-function useStick(max: number, onMove: (nx: number, ny: number) => void, onEnd: () => void) {
-  const knob = useRef<HTMLDivElement>(null);
-  const origin = useRef<{ x: number; y: number } | null>(null);
-  const setKnob = (dx: number, dy: number) => {
-    if (knob.current) knob.current.style.transform = `translate(${dx}px, ${dy}px)`;
-  };
-  const end = () => {
-    origin.current = null;
-    setKnob(0, 0);
-    onEnd();
-  };
-  return {
-    knob,
-    handlers: {
-      onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => {
-        e.currentTarget.setPointerCapture(e.pointerId);
-        const r = e.currentTarget.getBoundingClientRect();
-        // dynamic origin: stick centres where the thumb lands
-        origin.current = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-      },
-      onPointerMove: (e: React.PointerEvent<HTMLDivElement>) => {
-        const o = origin.current;
-        if (!o) return;
-        let dx = e.clientX - o.x;
-        let dy = e.clientY - o.y;
-        const len = Math.hypot(dx, dy);
-        if (len > max) {
-          dx = (dx / len) * max;
-          dy = (dy / len) * max;
-        }
-        setKnob(dx, dy);
-        onMove(dx / max, dy / max);
-      },
-      onPointerUp: end,
-      onPointerCancel: end,
-    },
-  };
-}
-
-export function TouchControls() {
-  const phase = useGame((s) => s.phase);
-  const [portrait, setPortrait] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(orientation: portrait) and (pointer: coarse)");
-    const upd = () => setPortrait(mq.matches);
-    upd();
-    mq.addEventListener("change", upd);
-    return () => mq.removeEventListener("change", upd);
-  }, []);
-
-  const move = useStick(
-    52,
-    (nx, ny) => {
-      input.moveX = nx;
-      input.moveY = -ny;
-    },
-    () => {
-      input.moveX = 0;
-      input.moveY = 0;
-    },
-  );
-  const aim = useStick(
-    48,
-    (nx) => {
-      input.aimX = nx;
-    },
-    () => {
-      input.aimX = 0;
-    },
-  );
-
-  if (phase !== "playing") return null;
-
-  return (
-    <div className="pointer-events-none fixed inset-0 z-20 hidden pointer-coarse:block">
-      {portrait && (
-        <div className="absolute left-1/2 top-16 -translate-x-1/2 animate-pulse rounded-sm border border-accent/50 bg-card/70 px-3 py-1 font-hud text-xs uppercase tracking-[0.2em] text-accent">
-          Ruota il telefono in orizzontale
-        </div>
-      )}
-
-      {/* move stick */}
-      <div
-        {...move.handlers}
-        className="pointer-events-auto absolute bottom-6 left-5 h-32 w-32 touch-none rounded-full border border-border/70 bg-card/40 backdrop-blur-sm landscape:bottom-5"
-      >
-        <div
-          ref={move.knob}
-          className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/60 bg-accent/25"
-        />
-      </div>
-
-      {/* aim stick */}
-      <div
-        {...aim.handlers}
-        className="pointer-events-auto absolute bottom-6 right-32 h-28 w-28 touch-none rounded-full border border-border/70 bg-card/40 backdrop-blur-sm landscape:bottom-5 landscape:right-36"
-      >
-        <div
-          ref={aim.knob}
-          className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/60 bg-primary/25"
-        />
-        <span className="pointer-events-none absolute inset-x-0 -top-5 text-center font-hud text-[10px] uppercase tracking-widest text-muted-foreground">
-          mira
-        </span>
-      </div>
-
-      <button
-        className="pointer-events-auto absolute bottom-8 right-4 h-24 w-24 touch-none rounded-full border border-destructive/70 bg-destructive/25 font-grunge text-lg uppercase tracking-widest text-foreground active:bg-destructive/50"
-        onPointerDown={(e) => {
-          e.preventDefault();
-          input.firing = true;
-        }}
-        onPointerUp={() => (input.firing = false)}
-        onPointerLeave={() => (input.firing = false)}
-      >
-        fuoco
-      </button>
-
-      <button
-        className="pointer-events-auto absolute bottom-36 right-8 h-14 w-14 touch-none rounded-full border border-border/70 bg-card/50 font-hud text-xs uppercase text-muted-foreground active:bg-card landscape:bottom-8 landscape:right-72"
-        onPointerDown={(e) => {
-          e.preventDefault();
-          const g = useGame.getState();
-          if (!g.reloading && g.ammo < g.weaponDef().mag && g.reserve > 0) {
-            g.setReloading(true);
-            world.reloadTimer = g.weaponDef().reload;
-          }
-        }}
-      >
-        ric
-      </button>
-    </div>
-  );
-}
