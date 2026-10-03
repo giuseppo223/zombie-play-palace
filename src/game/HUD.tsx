@@ -116,6 +116,9 @@ export function HUD() {
             </div>
           </div>
 
+          {/* touch controls (mobile, no gamepad) */}
+          {showTouchControls && <TouchControls />}
+
           {/* top left: points + round */}
           <div className="absolute left-4 top-4 space-y-1">
             <div className="font-grunge text-3xl leading-none text-accent drop-shadow-[0_2px_10px_var(--blood-glow)]">
