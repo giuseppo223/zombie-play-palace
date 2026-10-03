@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import { input } from "./world";
 
-/** On-screen controls for touch devices when playing without a gamepad:
- *  left half = move stick, right half = aim stick (rate turn), fire/reload/use buttons. */
+/** Brawl Stars-style touch controls: big move stick bottom-left,
+ *  big fire button bottom-right, aim by dragging on the right half. */
 export function TouchControls() {
   const moveId = useRef(-1);
   const aimId = useRef(-1);
@@ -10,7 +10,7 @@ export function TouchControls() {
   const aimOrigin = useRef({ x: 0, y: 0 });
   const [moveKnob, setMoveKnob] = useState({ x: 0, y: 0, active: false });
   const [aimKnob, setAimKnob] = useState({ x: 0, y: 0, active: false });
-  const R = 52; // stick radius px
+  const R = 64; // stick travel radius px
 
   const key = (code: string, down: boolean) =>
     window.dispatchEvent(new KeyboardEvent(down ? "keydown" : "keyup", { code }));
@@ -77,32 +77,32 @@ export function TouchControls() {
         onPointerUp={onUp}
         onPointerCancel={onUp}
       >
-        {/* left stick */}
-        <div className="absolute bottom-8 left-6 h-32 w-32 rounded-full border border-border/50 bg-card/30">
+        {/* left stick — big, Brawl Stars style */}
+        <div className="absolute bottom-10 left-8 h-44 w-44 rounded-full border-2 border-border/60 bg-card/40 backdrop-blur-sm">
           <div
-            className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/60 bg-accent/30"
+            className="absolute left-1/2 top-1/2 h-20 w-20 rounded-full border-2 border-accent/70 bg-accent/40"
             style={{
               transform: `translate(calc(-50% + ${moveKnob.x}px), calc(-50% + ${moveKnob.y}px))`,
-              opacity: moveKnob.active ? 1 : 0.5,
+              opacity: moveKnob.active ? 1 : 0.55,
             }}
           />
         </div>
-        {/* right stick (aim) */}
-        <div className="absolute bottom-8 right-6 h-32 w-32 rounded-full border border-border/50 bg-card/30">
+        {/* right aim pad */}
+        <div className="absolute bottom-10 right-8 h-44 w-44 rounded-full border-2 border-border/60 bg-card/40 backdrop-blur-sm">
           <div
-            className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/60 bg-accent/30"
+            className="absolute left-1/2 top-1/2 h-20 w-20 rounded-full border-2 border-accent/70 bg-accent/40"
             style={{
               transform: `translate(calc(-50% + ${aimKnob.x}px), calc(-50% + ${aimKnob.y}px))`,
-              opacity: aimKnob.active ? 1 : 0.5,
+              opacity: aimKnob.active ? 1 : 0.55,
             }}
           />
         </div>
       </div>
 
-      {/* action buttons */}
-      <div className="pointer-events-auto absolute bottom-40 right-6 flex flex-col items-end gap-3">
+      {/* big fire button above the aim pad, Brawl Stars style */}
+      <div className="pointer-events-auto absolute bottom-60 right-10 flex flex-col items-center gap-3">
         <button
-          className="h-20 w-20 rounded-full border border-destructive/70 bg-destructive/30 font-hud text-xs uppercase tracking-widest text-foreground active:bg-destructive/60"
+          className="h-24 w-24 rounded-full border-2 border-destructive bg-destructive/40 font-hud text-sm uppercase tracking-widest text-foreground shadow-[0_0_24px_var(--blood-glow)] active:bg-destructive/70"
           onPointerDown={() => (input.firing = true)}
           onPointerUp={() => (input.firing = false)}
           onPointerCancel={() => (input.firing = false)}
@@ -112,14 +112,14 @@ export function TouchControls() {
         </button>
         <div className="flex gap-3">
           <button
-            className="h-14 w-14 rounded-full border border-border/70 bg-card/50 font-hud text-[10px] uppercase tracking-widest text-foreground active:bg-card"
+            className="h-16 w-16 rounded-full border-2 border-border/70 bg-card/60 font-hud text-[10px] uppercase tracking-widest text-foreground active:bg-card"
             onPointerDown={() => key("KeyR", true)}
             onPointerUp={() => key("KeyR", false)}
           >
             Ricarica
           </button>
           <button
-            className="h-14 w-14 rounded-full border border-accent/70 bg-accent/25 font-hud text-[10px] uppercase tracking-widest text-foreground active:bg-accent/50"
+            className="h-16 w-16 rounded-full border-2 border-accent/70 bg-accent/30 font-hud text-[10px] uppercase tracking-widest text-foreground active:bg-accent/60"
             onPointerDown={() => key("KeyE", true)}
             onPointerUp={() => key("KeyE", false)}
           >
