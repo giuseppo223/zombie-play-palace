@@ -3,6 +3,7 @@ import { useGame, COST_AMMO, COST_HEAL, COST_BOX, WEAPONS, PERKS, PICKUP_LABEL }
 import { useUi } from "./ui-store";
 import { resetWorld, controlPrefs } from "./world";
 import { useGamepad } from "./Gamepad";
+import { TouchControls } from "./TouchControls";
 import { gates, ZONE_NAMES } from "./zones";
 import { ubers, KILLS_PER_UBER, COST_PAP } from "./uber";
 
@@ -87,6 +88,9 @@ export function HUD() {
   };
 
   const lowHealth = g.health <= 35;
+  const touchDevice =
+    typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+  const showTouchControls = g.phase === "playing" && touchDevice && !pad;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-10 select-none">
@@ -111,6 +115,9 @@ export function HUD() {
               <span className="absolute right-0 top-1/2 h-[2px] w-2 -translate-y-1/2 bg-accent" />
             </div>
           </div>
+
+          {/* touch controls (mobile, no gamepad) */}
+          {showTouchControls && <TouchControls />}
 
           {/* top left: points + round */}
           <div className="absolute left-4 top-4 space-y-1">
