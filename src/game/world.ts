@@ -49,6 +49,8 @@ export const input = {
   firing: false,
   /** accumulated yaw delta from pointer / touch drag */
   yawDelta: 0,
+  /** continuous aim from the gamepad right stick, -1..1 (positive = turn right) */
+  aimX: 0,
 };
 
 /** whether the player chose to play with a PlayStation controller */
