@@ -1,7 +1,17 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { world, input, resolveCollisions, forward, type Zombie } from "./world";
+import { world, input, resolveCollisions, forward, controlPrefs, type Zombie } from "./world";
+
+/** touch devices playing without a pad get auto-aim while firing (no look stick) */
+let coarsePointer: boolean | null = null;
+function touchAutoAim() {
+  if (coarsePointer === null) {
+    coarsePointer =
+      typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches;
+  }
+  return coarsePointer && !controlPrefs.pad;
+}
 import { gates, zoneAt } from "./zones";
 import { ubers, feedKill, allUbersCharged, uberCharged, PAP_POS, UBER_RADIUS } from "./uber";
 import { useGame, type PickupKind, type PerkId } from "./store";
