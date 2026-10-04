@@ -40,6 +40,17 @@ export const WEAPONS: WeaponDef[] = [
   { name: "Ray Gun", mag: 20, damage: 7, fireRate: 0.22, reload: 2.2, spread: 0.01, auto: false, mags: 6 },
   { name: "Wunderwaffe", mag: 3, damage: 40, fireRate: 0.9, reload: 3, spread: 0.01, auto: false, mags: 6, pierce: true },
   { name: "Thundergun", mag: 2, damage: 25, fireRate: 1, reload: 3.4, spread: 0.12, auto: false, mags: 6, pellets: 10, pierce: true },
+  // --- special wonder weapons ---
+  { name: "Ray Gun Mk II", mag: 21, damage: 9, fireRate: 0.12, reload: 2.4, spread: 0.008, auto: false, mags: 6, pellets: 3 },
+  { name: "Raggio Congelante", mag: 40, damage: 2.4, fireRate: 0.05, reload: 2.6, spread: 0.02, auto: true, mags: 4, pierce: true },
+  { name: "Lanciafiamme", mag: 80, damage: 1.2, fireRate: 0.04, reload: 3, spread: 0.09, auto: true, mags: 3, pellets: 3, pierce: true },
+  { name: "Balestra Esplosiva", mag: 3, damage: 30, fireRate: 0.8, reload: 2.6, spread: 0.01, auto: false, mags: 8, pellets: 4, pierce: true },
+  { name: "Minigun Death Machine", mag: 200, damage: 1.8, fireRate: 0.035, reload: 4, spread: 0.04, auto: true, mags: 2 },
+  { name: "Bastone del Fulmine", mag: 12, damage: 14, fireRate: 0.3, reload: 2.2, spread: 0.02, auto: false, mags: 5, pellets: 2, pierce: true },
+  { name: "Arco del Lupo", mag: 1, damage: 60, fireRate: 0.6, reload: 1, spread: 0.002, auto: false, mags: 30, pierce: true },
+  { name: "Scavenger", mag: 2, damage: 45, fireRate: 1.1, reload: 2.8, spread: 0.003, auto: false, mags: 8, pellets: 3, pierce: true },
+  { name: "Wave Gun", mag: 8, damage: 18, fireRate: 0.35, reload: 2.5, spread: 0.05, auto: false, mags: 6, pellets: 5, pierce: true },
+  { name: "Disintegratore", mag: 30, damage: 6, fireRate: 0.08, reload: 2.8, spread: 0.015, auto: true, mags: 4, pierce: true },
 ];
 
 export type PerkId = "jugger" | "speed" | "doubletap" | "stamin" | "revive" | "deadshot" | "vulture" | "cherry" | "mule" | "phd" | "widow";
