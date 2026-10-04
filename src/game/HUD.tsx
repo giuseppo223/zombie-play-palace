@@ -176,7 +176,11 @@ export function HUD() {
           </div>
 
           {/* bottom right: weapon */}
-          <div className="absolute bottom-24 right-4 text-right sm:bottom-6">
+          <div
+            className={`absolute right-4 text-right ${
+              showTouchControls ? "bottom-48" : "bottom-24 sm:bottom-6"
+            }`}
+          >
             <div className="font-hud text-sm uppercase tracking-[0.2em] text-muted-foreground">
               {WEAPONS[g.weapon]?.name}
             </div>
@@ -189,7 +193,11 @@ export function HUD() {
           </div>
 
           {/* Überschnalle charge tracker */}
-          <div className="absolute bottom-36 right-4 space-y-1 text-right sm:bottom-16">
+          <div
+            className={`absolute right-4 space-y-1 text-right ${
+              showTouchControls ? "bottom-64" : "bottom-36 sm:bottom-16"
+            }`}
+          >
             <div className="font-hud text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
               überschnalle
             </div>

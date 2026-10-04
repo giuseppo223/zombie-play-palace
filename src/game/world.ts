@@ -49,7 +49,7 @@ export const input = {
   firing: false,
   /** accumulated yaw delta from pointer / touch drag */
   yawDelta: 0,
-  /** continuous aim from the right virtual stick, -1..1 (positive = turn right) */
+  /** continuous aim from the gamepad right stick, -1..1 (positive = turn right) */
   aimX: 0,
 };
 
