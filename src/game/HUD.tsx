@@ -416,6 +416,12 @@ export function HUD() {
             >
               Senza controller
             </button>
+            <button
+              onClick={() => startGame(false)}
+              className="border border-primary/70 bg-primary/15 px-6 py-3 font-grunge text-lg uppercase tracking-[0.15em] text-foreground transition-colors hover:bg-primary/35"
+            >
+              Gioca su PC
+            </button>
           </div>
           <div className="mt-3 font-hud text-xs uppercase tracking-[0.2em] text-accent">
             {padConnected ? "controller collegato" : "collega il controller e premi un tasto"}
