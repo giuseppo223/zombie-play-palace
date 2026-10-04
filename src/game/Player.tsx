@@ -77,6 +77,23 @@ export function Player() {
 
   function fireRay(g: ReturnType<typeof useGame.getState>, def: ReturnType<typeof g.weaponDef>) {
     forward(world.yaw, v.dir);
+    // touch: aim the shot at the nearest zombie in front, without turning the camera
+    if (touchAutoAim()) {
+      let best: Zombie | null = null;
+      let bestD2 = 38 * 38;
+      for (const z of world.zombies) {
+        if (!z.active || z.dying > 0) continue;
+        const dx = z.pos.x - world.playerPos.x;
+        const dz = z.pos.z - world.playerPos.z;
+        const d2 = dx * dx + dz * dz;
+        if (d2 >= bestD2) continue;
+        const d = Math.sqrt(d2) || 1;
+        if ((dx * v.dir.x + dz * v.dir.z) / d < 0.6) continue; // ~53° cone
+        bestD2 = d2;
+        best = z;
+      }
+      if (best) v.dir.set(best.pos.x - world.playerPos.x, 0, best.pos.z - world.playerPos.z).normalize();
+    }
     v.dir.x += (Math.random() - 0.5) * def.spread * 2;
     v.dir.z += (Math.random() - 0.5) * def.spread * 2;
     v.dir.normalize();
@@ -178,29 +195,6 @@ export function Player() {
       world.yaw -= Math.sign(a) * Math.pow(Math.abs(a), 1.6) * 3.6 * delta;
     }
 
-    // touch without a pad: no look stick — auto-face the nearest zombie while firing
-    if (playing && input.firing && touchAutoAim()) {
-      let best: Zombie | null = null;
-      let bestD2 = 38 * 38;
-      for (const z of world.zombies) {
-        if (!z.active || z.dying > 0) continue;
-        const d2 = z.pos.distanceToSquared(world.playerPos);
-        if (d2 < bestD2) {
-          bestD2 = d2;
-          best = z;
-        }
-      }
-      if (best) {
-        const dx = best.pos.x - world.playerPos.x;
-        const dz = best.pos.z - world.playerPos.z;
-        const target = Math.atan2(-dx, -dz);
-        let diff = target - world.yaw;
-        while (diff > Math.PI) diff -= Math.PI * 2;
-        while (diff < -Math.PI) diff += Math.PI * 2;
-        const maxTurn = 9 * delta;
-        world.yaw += Math.max(-maxTurn, Math.min(maxTurn, diff));
-      }
-    }
 
     forward(world.yaw, v.fwd);
     v.right.set(-v.fwd.z, 0, v.fwd.x);
