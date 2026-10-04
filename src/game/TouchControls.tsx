@@ -69,7 +69,7 @@ export function TouchControls() {
       </div>
 
       {/* fire / reload / use cluster — low on the right, Brawl Stars style */}
-      <div className="pointer-events-auto absolute bottom-6 right-6 flex items-end gap-4 touch-none" onPointerDownCapture={(e) => e.stopPropagation()} onPointerMove={(e) => e.stopPropagation()} onPointerMoveCapture={(e) => e.stopPropagation()}>
+      <div className="pointer-events-auto absolute bottom-6 right-6 flex items-end gap-4 touch-none" onPointerDown={(e) => e.stopPropagation()} onPointerMove={(e) => e.stopPropagation()}>
         <div className="flex flex-col gap-3">
           <button
             className="h-16 w-16 rounded-full border-2 border-border/70 bg-card/60 font-hud text-[10px] uppercase tracking-widest text-foreground active:bg-card"
