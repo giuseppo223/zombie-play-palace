@@ -172,6 +172,11 @@ export function Player() {
 
     world.yaw -= input.yawDelta * 0.0032;
     input.yawDelta = 0;
+    // gamepad: right stick still turns the view
+    if (playing && controlPrefs.pad && input.aimX !== 0) {
+      const a = input.aimX;
+      world.yaw -= Math.sign(a) * Math.pow(Math.abs(a), 1.6) * 3.6 * delta;
+    }
 
     // touch without a pad: no look stick — auto-face the nearest zombie while firing
     if (playing && input.firing && touchAutoAim()) {
