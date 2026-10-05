@@ -36,7 +36,7 @@ export type Pickup = {
 
 export type Obstacle = { x: number; z: number; hx: number; hz: number; rot?: number };
 
-export const ARENA_RADIUS = 82;
+export const ARENA_RADIUS = 115;
 export const MAX_ZOMBIES = 40;
 export const MAX_TRACERS = 24;
 export const MAX_PICKUPS = 6;
@@ -122,15 +122,15 @@ export type Building = {
 
 /** Points of interest kept clear of buildings/props. */
 export const POI = {
-  station: { x: 8, z: 8 },
+  station: { x: 11, z: 11 },
   /** mystery box sits in the first unlockable zone (east quarter) */
-  box: { x: 26, z: 22 },
+  box: { x: 36, z: 31 },
   /** pack-a-punch in the central square */
-  pap: { x: -10, z: -7 },
-  uberA: { x: Math.cos((28 * Math.PI) / 180) * 37, z: Math.sin((28 * Math.PI) / 180) * 37 },
-  uberB: { x: Math.cos((118 * Math.PI) / 180) * 40, z: Math.sin((118 * Math.PI) / 180) * 40 },
-  uberC: { x: Math.cos((212 * Math.PI) / 180) * 61, z: Math.sin((212 * Math.PI) / 180) * 61 },
-  uberD: { x: Math.cos((303 * Math.PI) / 180) * 64, z: Math.sin((303 * Math.PI) / 180) * 64 },
+  pap: { x: -14, z: -10 },
+  uberA: { x: Math.cos((28 * Math.PI) / 180) * 52, z: Math.sin((28 * Math.PI) / 180) * 52 },
+  uberB: { x: Math.cos((118 * Math.PI) / 180) * 56, z: Math.sin((118 * Math.PI) / 180) * 56 },
+  uberC: { x: Math.cos((212 * Math.PI) / 180) * 85, z: Math.sin((212 * Math.PI) / 180) * 85 },
+  uberD: { x: Math.cos((303 * Math.PI) / 180) * 90, z: Math.sin((303 * Math.PI) / 180) * 90 },
 };
 
 /** Each perk machine stands alone in its own corner of the city. */
@@ -139,9 +139,9 @@ export const PERK_SPOTS: { id: "jugger" | "speed" | "doubletap" | "stamin" | "re
     const ids = ["jugger", "speed", "doubletap", "stamin", "revive", "deadshot", "vulture", "cherry", "mule", "phd", "widow"] as const;
     let seed = 909;
     return ids.map((id, i) => {
-      // keep clear of the zone walls (radial walls every 45°, ring walls at r=20/50/82)
+      // keep clear of the zone walls (radial walls every 45°, ring walls at r=28/70/115)
       const a = (i / ids.length) * Math.PI * 2 + 0.2 + rand(seed++) * 0.2;
-      const r = i % 2 === 0 ? 28 + rand(seed++) * 16 : 57 + rand(seed++) * 18;
+      const r = i % 2 === 0 ? 38 + rand(seed++) * 22 : 78 + rand(seed++) * 26;
       return { id, x: Math.cos(a) * r, z: Math.sin(a) * r };
     });
   })();
@@ -155,9 +155,9 @@ function nearPoi(x: number, z: number, r: number) {
 export const buildings: Building[] = (() => {
   const list: Building[] = [];
   let seed = 1;
-  for (let ring = 0; ring < 6; ring++) {
+  for (let ring = 0; ring < 8; ring++) {
     const count = 8 + ring * 4;
-    const radius = 20 + ring * 13;
+    const radius = 26 + ring * 12;
     for (let i = 0; i < count; i++) {
       const a = (i / count) * Math.PI * 2 + rand(seed++) * 0.25;
       const r = radius + rand(seed++) * 6;
@@ -167,7 +167,7 @@ export const buildings: Building[] = (() => {
       const x = Math.cos(a) * r;
       const z = Math.sin(a) * r;
       const tint = rand(seed++);
-      if (Math.hypot(x, z) < 14) continue;
+      if (Math.hypot(x, z) < 19) continue;
       if (nearPoi(x, z, 9)) continue;
       list.push({ x, z, w, d, h, tint });
     }
@@ -183,7 +183,7 @@ export type Prop = { kind: "car" | "barrel" | "crate"; x: number; z: number; rot
 export const props: Prop[] = (() => {
   const list: Prop[] = [];
   let seed = 500;
-  for (let i = 0; i < 70; i++) {
+  for (let i = 0; i < 100; i++) {
     const a = rand(seed++) * Math.PI * 2;
     const r = 8 + rand(seed++) * (ARENA_RADIUS - 12);
     const x = Math.cos(a) * r;
@@ -204,9 +204,9 @@ props.forEach((p) => {
 
 // street lamps (same layout as City.tsx)
 [
-  { r: 15, n: 10 },
-  { r: 42, n: 14 },
-  { r: 68, n: 18 },
+  { r: 20, n: 10 },
+  { r: 58, n: 16 },
+  { r: 96, n: 22 },
 ].forEach(({ r, n }, ri) => {
   for (let i = 0; i < n; i++) {
     const a = (i / n) * Math.PI * 2 + ri * 0.3;

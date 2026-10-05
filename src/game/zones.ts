@@ -8,9 +8,9 @@ import * as THREE from "three";
  * Every boundary between two zones is a wall with one gate in it. Only some
  * gates can be bought open; the others are welded shut forever.
  */
-export const R_INNER = 20;
-export const R_MID = 50;
-export const R_OUTER = 82;
+export const R_INNER = 28;
+export const R_MID = 70;
+export const R_OUTER = 115;
 export const WALL_H = 3.6;
 export const WALL_T = 0.7;
 export const GATE_W = 5.2;

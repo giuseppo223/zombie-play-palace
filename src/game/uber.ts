@@ -23,14 +23,14 @@ function polar(deg: number, r: number) {
 }
 
 export const ubers: Uber[] = [
-  { id: 0, name: "Überschnalle Alfa", ...polar(28, 37), charge: 0 },
-  { id: 1, name: "Überschnalle Bravo", ...polar(118, 40), charge: 0 },
-  { id: 2, name: "Überschnalle Charlie", ...polar(212, 61), charge: 0 },
-  { id: 3, name: "Überschnalle Delta", ...polar(303, 64), charge: 0 },
+  { id: 0, name: "Überschnalle Alfa", ...polar(28, 52), charge: 0 },
+  { id: 1, name: "Überschnalle Bravo", ...polar(118, 56), charge: 0 },
+  { id: 2, name: "Überschnalle Charlie", ...polar(212, 85), charge: 0 },
+  { id: 3, name: "Überschnalle Delta", ...polar(303, 90), charge: 0 },
 ];
 
 /** Pack-a-Punch stands in the central square, dormant until every buckle is full. */
-export const PAP_POS = { x: -10, z: -7 };
+export const PAP_POS = { x: -14, z: -10 };
 export const COST_PAP = 5000;
 
 export function uberCharged(u: Uber) {
