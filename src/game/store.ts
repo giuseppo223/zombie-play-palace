@@ -170,7 +170,7 @@ export const useGame = create<GameState>((set, get) => ({
     gate.open = true;
     refreshGateCosts();
     set({
-      points: s.points - gate.cost,
+      points: Math.max(0, s.points - gate.cost),
       gatesOpened: s.gatesOpened + 1,
       notice: `Cancello aperto: ${ZONE_NAMES[gate.a === s.zoneId ? gate.b : gate.a]}`,
     });
@@ -194,7 +194,7 @@ export const useGame = create<GameState>((set, get) => ({
     if (s.points < COST_PAP) return set({ notice: "Punti insufficienti" });
     const base = WEAPONS[s.weapon] ?? WEAPONS[0]!;
     set({
-      points: s.points - COST_PAP,
+      points: Math.max(0, s.points - COST_PAP),
       upgraded: true,
       ammo: Math.round(base.mag * 1.5),
       reserve: Math.round(base.mag * 1.5) * (base.mags + 2),
@@ -287,7 +287,7 @@ export const useGame = create<GameState>((set, get) => ({
     const s = get();
     if (s.points < COST_AMMO) return set({ notice: "Punti insufficienti" });
     set({
-      points: s.points - COST_AMMO,
+      points: Math.max(0, s.points - COST_AMMO),
       reserve: s.reserve + s.weaponDef().mag * 3,
       notice: "Munizioni acquistate",
     });
@@ -296,7 +296,7 @@ export const useGame = create<GameState>((set, get) => ({
     const s = get();
     if (s.points < COST_HEAL) return set({ notice: "Punti insufficienti" });
     if (s.health >= s.maxHealth) return set({ notice: "Sei già al massimo" });
-    set({ points: s.points - COST_HEAL, health: s.maxHealth, notice: "Cura completata" });
+    set({ points: Math.max(0, s.points - COST_HEAL), health: s.maxHealth, notice: "Cura completata" });
   },
   buyPerk: (id) => {
     const s = get();
@@ -305,7 +305,7 @@ export const useGame = create<GameState>((set, get) => ({
     if (s.points < perk.cost) return set({ notice: "Punti insufficienti" });
     const maxHealth = id === "jugger" ? 200 : s.maxHealth;
     set({
-      points: s.points - perk.cost,
+      points: Math.max(0, s.points - perk.cost),
       perks: [...s.perks, id],
       maxHealth,
       health: id === "jugger" ? Math.min(maxHealth, s.health + 100) : s.health,
@@ -325,7 +325,7 @@ export const useGame = create<GameState>((set, get) => ({
     }
     const w = WEAPONS[next]!;
     set({
-      points: s.points - COST_BOX,
+      points: Math.max(0, s.points - COST_BOX),
       weapon: next,
       upgraded: false,
       ammo: w.mag,
