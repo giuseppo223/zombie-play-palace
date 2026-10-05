@@ -46,9 +46,9 @@ export function City() {
   const lamps = useMemo(() => {
     const out: { x: number; z: number; lit: boolean }[] = [];
     const rings = [
-      { r: 15, n: 10, every: 2 },
-      { r: 42, n: 14, every: 99 },
-      { r: 68, n: 18, every: 99 },
+      { r: 20, n: 10, every: 2 },
+      { r: 58, n: 16, every: 99 },
+      { r: 96, n: 22, every: 99 },
     ];
     rings.forEach(({ r, n, every }, ri) => {
       for (let i = 0; i < n; i++) {

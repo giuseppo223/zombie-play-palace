@@ -101,7 +101,7 @@ export function GameCanvas() {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
             gl.toneMappingExposure = 1.15;
             scene.background = new THREE.Color("#0b0e13");
-            scene.fog = new THREE.FogExp2("#0b0e13", 0.018);
+            scene.fog = new THREE.FogExp2("#0b0e13", 0.013);
           }}
         >
           <Atmosphere />
