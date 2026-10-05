@@ -251,6 +251,7 @@ export function Atmosphere() {
         shadow-camera-top={100}
         shadow-camera-bottom={-100}
         shadow-camera-far={220}
+        // (fog lives in GameCanvas; see below)
       />
       {/* blood moon grows redder as rounds go up */}
       <pointLight
