@@ -25,3 +25,4 @@
 - [ ] Minimappa / indicatori direzione verso cassa e perk
 - [x] 4 nuovi perk: Quick Revive, Deadshot, Vulture Aid, Electric Cherry
 - [x] Oggetti solidi (auto ruotate, lampioni, macchine) + 3 perk: Mule Kick, PhD Flopper, Widow's Wine
+- Mappa ingrandita ~1,4x (raggio 82 -> 115), anelli edifici da 6 a 8, prop/lampioni/POI ridimensionati
