@@ -21,6 +21,8 @@ function useInputBindings() {
       }
       const g = useGame.getState();
       if (g.phase !== "playing") return;
+      // ignore key auto-repeat for purchases so holding a key can't double-spend
+      if (e.repeat && (e.code === "Digit1" || e.code === "Digit2" || e.code === "KeyE" || e.code === "KeyF")) return;
       if (e.code === "KeyR" && !g.reloading && g.ammo < g.weaponDef().mag && g.reserve > 0) {
         g.setReloading(true);
         world.reloadTimer = g.weaponDef().reload;
