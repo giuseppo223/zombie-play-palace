@@ -10,7 +10,7 @@ function touchAutoAim() {
     coarsePointer =
       typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches;
   }
-  return coarsePointer && !controlPrefs.pad;
+  return coarsePointer && controlPrefs.mode === "touch";
 }
 import { gates, zoneAt } from "./zones";
 import { ubers, feedKill, allUbersCharged, uberCharged, PAP_POS, UBER_RADIUS } from "./uber";
@@ -190,7 +190,7 @@ export function Player() {
     world.yaw -= input.yawDelta * 0.0032;
     input.yawDelta = 0;
     // gamepad: right stick still turns the view
-    if (playing && controlPrefs.pad && input.aimX !== 0) {
+    if (playing && controlPrefs.mode === "pad" && input.aimX !== 0) {
       const a = input.aimX;
       world.yaw -= Math.sign(a) * Math.pow(Math.abs(a), 1.6) * 3.6 * delta;
     }

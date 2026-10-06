@@ -53,8 +53,10 @@ export const input = {
   aimX: 0,
 };
 
-/** whether the player chose to play with a PlayStation controller */
-export const controlPrefs = { pad: false };
+export type ControlMode = "touch" | "pad" | "pc";
+
+/** control scheme selected from the main menu */
+export const controlPrefs: { mode: ControlMode } = { mode: "pc" };
 
 export const world = {
   yaw: 0,

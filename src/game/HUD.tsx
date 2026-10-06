@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useGame, COST_AMMO, COST_HEAL, COST_BOX, WEAPONS, PERKS, PICKUP_LABEL } from "./store";
 import { useUi } from "./ui-store";
-import { resetWorld, controlPrefs } from "./world";
+import { resetWorld, controlPrefs, type ControlMode } from "./world";
 import { useGamepad } from "./Gamepad";
 import { TouchControls } from "./TouchControls";
 import { gates, ZONE_NAMES } from "./zones";
@@ -55,9 +55,9 @@ export function HUD() {
     return () => clearTimeout(t);
   }, [g.notice]);
 
-  const [pad, setPad] = useState(controlPrefs.pad);
+  const [controlMode, setControlMode] = useState<ControlMode>(controlPrefs.mode);
   const [padConnected, setPadConnected] = useState(false);
-  useGamepad(pad);
+  useGamepad(controlMode === "pad");
   useEffect(() => {
     const upd = () => setPadConnected(Array.from(navigator.getGamepads?.() ?? []).some(Boolean));
     upd();
@@ -69,13 +69,13 @@ export function HUD() {
     };
   }, []);
 
-  const startGame = (withPad: boolean = pad) => {
-    controlPrefs.pad = withPad;
-    setPad(withPad);
+  const startGame = (mode: ControlMode = controlMode) => {
+    controlPrefs.mode = mode;
+    setControlMode(mode);
     resetWorld();
     g.start();
-    // on touch devices go fullscreen and try to lock landscape
-    if (typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches) {
+    // Only the touch layout requests fullscreen and landscape orientation.
+    if (mode === "touch" && typeof window !== "undefined") {
       const el = document.documentElement;
       const fs = el.requestFullscreen?.({ navigationUI: "hide" });
       const lock = () => {
@@ -88,9 +88,7 @@ export function HUD() {
   };
 
   const lowHealth = g.health <= 35;
-  const touchDevice =
-    typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
-  const showTouchControls = g.phase === "playing" && touchDevice && !pad;
+  const showTouchControls = g.phase === "playing" && controlMode === "touch";
 
   return (
     <div className="pointer-events-none fixed inset-0 z-10 select-none">
@@ -405,19 +403,19 @@ export function HUD() {
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <button
-              onClick={() => startGame(true)}
+              onClick={() => startGame("pad")}
               className="border border-accent/70 bg-accent/15 px-6 py-3 font-grunge text-lg uppercase tracking-[0.15em] text-foreground transition-colors hover:bg-accent/35"
             >
               Con controller PS
             </button>
             <button
-              onClick={() => startGame(false)}
+              onClick={() => startGame("touch")}
               className="border border-destructive/70 bg-destructive/15 px-6 py-3 font-grunge text-lg uppercase tracking-[0.15em] text-foreground transition-colors hover:bg-destructive/35"
             >
               Senza controller
             </button>
             <button
-              onClick={() => startGame(false)}
+              onClick={() => startGame("pc")}
               className="border border-primary/70 bg-primary/15 px-6 py-3 font-grunge text-lg uppercase tracking-[0.15em] text-foreground transition-colors hover:bg-primary/35"
             >
               Gioca su PC
