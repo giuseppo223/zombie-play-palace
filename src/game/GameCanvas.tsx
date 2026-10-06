@@ -8,7 +8,7 @@ import { Player } from "./Player";
 import { ZombieSystem } from "./Zombies";
 import { Atmosphere, Station, Tracers, Pickups, MysteryBox, PerkMachines } from "./Effects";
 import { HUD } from "./HUD";
-import { input, world } from "./world";
+import { controlPrefs, input, world } from "./world";
 import { useGame, PERKS } from "./store";
 import { useUi } from "./ui-store";
 
@@ -66,8 +66,15 @@ export function GameCanvas() {
       input.moveX = 0;
       input.moveY = 0;
     };
+    const onPointerLockChange = () => {
+      if (!document.pointerLockElement) input.firing = false;
+    };
     window.addEventListener("blur", onBlur);
-    return () => window.removeEventListener("blur", onBlur);
+    document.addEventListener("pointerlockchange", onPointerLockChange);
+    return () => {
+      window.removeEventListener("blur", onBlur);
+      document.removeEventListener("pointerlockchange", onPointerLockChange);
+    };
   }, []);
 
   return (
@@ -77,21 +84,27 @@ export function GameCanvas() {
         onPointerDown={(e) => {
           const g = useGame.getState();
           if (g.phase !== "playing") return;
+          if (e.pointerType === "mouse" && controlPrefs.mode === "pc") {
+            if (!document.pointerLockElement) {
+              e.currentTarget.requestPointerLock?.();
+              return;
+            }
+            input.firing = true;
+            return;
+          }
+          if (controlPrefs.mode !== "touch") return;
           (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-          if (e.pointerType === "mouse") input.firing = true;
         }}
         onPointerUp={() => {
           input.firing = false;
         }}
         onPointerMove={(e) => {
           if (useGame.getState().phase !== "playing") return;
-          if (e.pointerType === "mouse") {
-            if (document.pointerLockElement) input.yawDelta += e.movementX;
-            else if (e.buttons > 0) input.yawDelta += e.movementX * 1.6;
-            else input.yawDelta += e.movementX * 0.75;
-          } else if (e.buttons > 0 && e.clientX > window.innerWidth * 0.45) {
-            input.yawDelta += e.movementX * 2.2;
-          }
+          if (
+            e.pointerType === "mouse" &&
+            controlPrefs.mode === "pc" &&
+            document.pointerLockElement
+          ) input.yawDelta += e.movementX;
         }}
       >
         <Canvas
