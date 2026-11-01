@@ -14,13 +14,73 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      zombie_room_members: {
+        Row: {
+          name: string
+          player_id: string
+          room_code: string
+          seen_at: string
+          token_hash: string
+        }
+        Insert: {
+          name: string
+          player_id?: string
+          room_code: string
+          seen_at?: string
+          token_hash: string
+        }
+        Update: {
+          name?: string
+          player_id?: string
+          room_code?: string
+          seen_at?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zombie_room_members_room_code_fkey"
+            columns: ["room_code"]
+            isOneToOne: false
+            referencedRelation: "zombie_rooms"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      zombie_rooms: {
+        Row: {
+          code: string
+          created_at: string
+          host_token: string
+          started: boolean
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          host_token: string
+          started?: boolean
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          host_token?: string
+          started?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      zombie_room_action: {
+        Args: {
+          action: string
+          player_name?: string
+          room: string
+          token: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
