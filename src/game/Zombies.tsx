@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { world, resolveCollisions, MAX_ZOMBIES, ARENA_RADIUS, type Zombie } from "./world";
 import { zoneAt, randomPointInZone } from "./zones";
 import { useGame } from "./store";
+import { isGuest, network, useNetwork } from "./network-state";
 
 const SKIN = "#6f7f63";
 const CLOTH = "#2b3138";
@@ -256,7 +257,8 @@ export function ZombieSystem() {
     const delta = Math.min(rawDelta, 0.05);
     const g = useGame.getState();
     const widow = g.perks.includes("widow");
-    if (g.phase !== "playing") return;
+    const room = useNetwork.getState().room;
+    if (isGuest() || (g.phase !== "playing" && !(room?.started && g.phase === "dead"))) return;
 
     const activeCount = world.zombies.filter((z) => z.active && z.dying === 0).length;
 
@@ -308,7 +310,6 @@ export function ZombieSystem() {
     // --- movement / attacks ---
     let alive = 0;
     let bossHp = -1;
-    const playerZone = zoneAt(world.playerPos.x, world.playerPos.z);
     for (const z of world.zombies) {
       if (!z.active) continue;
       if (z.dying > 0) {
@@ -321,7 +322,18 @@ export function ZombieSystem() {
       z.hitFlash = Math.max(0, z.hitFlash - delta * 4);
       z.attackCd = Math.max(0, z.attackCd - delta);
 
-      dirs.toPlayer.copy(world.playerPos).sub(z.pos);
+      let targetId = room?.id ?? '';
+      let tx = world.playerPos.x, tz = world.playerPos.z;
+      let targetWidow = widow;
+      let nearest = g.health > 0 ? Math.hypot(tx-z.pos.x,tz-z.pos.z) : Infinity;
+      for (const remote of network.remotes.values()) {
+        if (remote.health <= 0 || remote.phase !== 'playing') continue;
+        const d = Math.hypot(remote.x-z.pos.x,remote.z-z.pos.z);
+        if (d < nearest) { nearest=d; tx=remote.x; tz=remote.z; targetId=remote.id; targetWidow=remote.widow; }
+      }
+      if (!Number.isFinite(nearest)) continue;
+      const playerZone = zoneAt(tx,tz);
+      dirs.toPlayer.set(tx, 0, tz).sub(z.pos);
       dirs.toPlayer.y = 0;
       const dist = dirs.toPlayer.length() || 1;
       dirs.toPlayer.divideScalar(dist);
@@ -339,12 +351,13 @@ export function ZombieSystem() {
         } else z.stuck = 0;
         z.pos.addScaledVector(
           dirs.toPlayer,
-          z.speed * delta * (widow && z.pos.distanceTo(world.playerPos) < 4 ? 0.5 : 1),
+          z.speed * delta * (targetWidow && dist < 4 ? 0.5 : 1),
         );
         resolveCollisions(z.pos, z.boss ? 0.9 : 0.45);
       } else if (z.attackCd <= 0) {
         z.attackCd = z.boss ? 1.6 : 1.1;
-        g.damage(z.damage);
+        if (room && targetId !== room.id) network.damage(targetId, z.damage);
+        else g.damage(z.damage);
         world.hurt = 1;
         world.shake = Math.max(world.shake, z.boss ? 1 : 0.5);
       }
