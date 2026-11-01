@@ -16,6 +16,7 @@ import { gates, zoneAt } from "./zones";
 import { ubers, feedKill, allUbersCharged, uberCharged, PAP_POS, UBER_RADIUS } from "./uber";
 import { useGame, type PickupKind, type PerkId } from "./store";
 import { useUi, STATION_POS, BOX_POS, PERK_POSITIONS, type Zone } from "./ui-store";
+import { isGuest, queueCommand } from "./network-state";
 
 const SPEED = 6.4;
 const DROP_CHANCE = 0.045;
@@ -132,6 +133,7 @@ export function Player() {
       const z = h.z;
       let dmg = def.damage * (h.head ? (g.perks.includes("deadshot") ? 5 : 2.5) : 1);
       if (world.boost.instakill > 0) dmg = z.boss ? z.maxHp * 0.08 : 999;
+      if (isGuest()) { queueCommand({ kind: 'hit', index: world.zombies.indexOf(z), damage: dmg, head: h.head }); continue; }
       z.hp -= dmg;
       z.hitFlash = 1;
       if (z.hp <= 0) {
@@ -243,6 +245,7 @@ export function Player() {
         world.shake = Math.max(world.shake, 0.35);
         for (const z of world.zombies) {
           if (z.dying > 0 || z.pos.distanceTo(world.playerPos) > 5) continue;
+          if (isGuest()) { queueCommand({ kind: 'hit', index: world.zombies.indexOf(z), damage: z.boss ? z.maxHp * 0.05 : 4 + g.round * 0.6, head: false }); continue; }
           z.hp -= z.boss ? z.maxHp * 0.05 : 4 + g.round * 0.6;
           z.hitFlash = 1;
           if (z.hp <= 0) {
@@ -317,6 +320,7 @@ export function Player() {
           continue;
         }
         if (Math.hypot(px - p.pos.x, pz - p.pos.z) < 1.3) {
+          if (isGuest()) { queueCommand({ kind: 'pickup', index: world.pickups.indexOf(p) }); p.active = false; continue; }
           p.active = false;
           g.applyPickup(p.kind);
         }

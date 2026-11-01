@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { world } from "./world";
 import { gates, ZONE_NAMES, refreshGateCosts } from "./zones";
 import { COST_PAP } from "./uber";
+import { isGuest, queueCommand } from "./network-state";
 
 export type Phase = "menu" | "playing" | "dead";
 
@@ -166,11 +167,13 @@ export const useGame = create<GameState>((set, get) => ({
     const s = get();
     const gate = gates[id];
     if (!gate || gate.open) return;
+    if (isGuest()) { queueCommand({ kind: 'gate', index: id, points: s.points }); return; }
         if (s.points < gate.cost) return set({ notice: "Punti insufficienti" });
+    const purchaseCost = gate.cost;
     gate.open = true;
     refreshGateCosts();
     set({
-      points: Math.max(0, s.points - gate.cost),
+      points: Math.max(0, s.points - purchaseCost),
       gatesOpened: s.gatesOpened + 1,
       notice: `Cancello aperto: ${ZONE_NAMES[gate.a === s.zoneId ? gate.b : gate.a]}`,
     });

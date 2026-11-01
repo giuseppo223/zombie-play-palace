@@ -6,6 +6,8 @@ import { useGamepad } from "./Gamepad";
 import { TouchControls } from "./TouchControls";
 import { gates, ZONE_NAMES } from "./zones";
 import { ubers, KILLS_PER_UBER, COST_PAP } from "./uber";
+import { MultiplayerLobby, TeamHUD } from "./Multiplayer";
+import { useNetwork } from "./network-state";
 
 function BuyRow({
   label,
@@ -36,6 +38,7 @@ function BuyRow({
 
 export function HUD() {
   const g = useGame();
+  const multiplayerRoom = useNetwork((s) => s.room);
   const zone = useUi((s) => s.zone);
   const nearPerk = useUi((s) => s.perk);
   const nearGate = useUi((s) => s.gate);
@@ -104,6 +107,7 @@ export function HUD() {
 
       {g.phase === "playing" && (
         <>
+          <TeamHUD />
           {/* crosshair */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <div className="relative h-6 w-6 opacity-70">
@@ -386,7 +390,7 @@ export function HUD() {
       )}
 
       {g.phase === "menu" && (
-        <div className="pointer-events-auto absolute inset-0 flex flex-col items-center justify-center bg-background/80 px-6 text-center backdrop-blur-sm">
+        <div className="pointer-events-auto absolute inset-0 flex flex-col items-center overflow-y-auto bg-background/80 px-6 py-8 text-center backdrop-blur-sm">
           <div className="font-hud text-xs uppercase tracking-[0.5em] text-accent">
             sopravvivenza a ondate
           </div>
@@ -401,7 +405,7 @@ export function HUD() {
             distributori perk. Gli zombie possono lasciare boost: Insta-Kill, Punti Doppi, Nuke,
             Munizioni Max, Velocità.
           </p>
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+          {!multiplayerRoom && <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <button
               onClick={() => startGame("pad")}
               className="border border-accent/70 bg-accent/15 px-6 py-3 font-grunge text-lg uppercase tracking-[0.15em] text-foreground transition-colors hover:bg-accent/35"
@@ -420,7 +424,8 @@ export function HUD() {
             >
               Gioca su PC
             </button>
-          </div>
+          </div>}
+          <MultiplayerLobby onMode={(mode) => { controlPrefs.mode = mode; setControlMode(mode); }} />
           <div className="mt-3 font-hud text-xs uppercase tracking-[0.2em] text-accent">
             {padConnected ? "controller collegato" : "collega il controller e premi un tasto"}
           </div>
@@ -455,10 +460,10 @@ export function HUD() {
             </div>
           </div>
           <button
-            onClick={() => startGame()}
+            onClick={() => { if (multiplayerRoom) { useNetwork.setState({ room: null }); g.toMenu(); } else startGame(); }}
             className="mt-8 border border-destructive/70 bg-destructive/15 px-8 py-3 font-grunge text-xl uppercase tracking-[0.2em] text-foreground transition-colors hover:bg-destructive/35"
           >
-            Riprova
+            {multiplayerRoom ? "Torna al menu" : "Riprova"}
           </button>
           <div className="mt-3 font-hud text-xs uppercase tracking-[0.2em] text-muted-foreground">
             record {g.best.toLocaleString("it-IT")}

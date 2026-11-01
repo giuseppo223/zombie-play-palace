@@ -11,6 +11,7 @@ import { HUD } from "./HUD";
 import { controlPrefs, input, world } from "./world";
 import { useGame, PERKS } from "./store";
 import { useUi } from "./ui-store";
+import { MultiplayerConnection, RemotePlayers } from "./Multiplayer";
 
 function useInputBindings() {
   useEffect(() => {
@@ -128,11 +129,13 @@ export function GameCanvas() {
           <PerkMachines />
           <Pickups />
           <Player />
+          <RemotePlayers />
           <ZombieSystem />
           <Tracers />
         </Canvas>
       </div>
       <HUD />
+      <MultiplayerConnection />
     </div>
   );
 }
