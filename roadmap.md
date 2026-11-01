@@ -1,5 +1,8 @@
 # Roadmap — Zombie Night (3D)
 
+## Multiplayer
+- [ ] Stanze online con codice, massimo 3 giocatori, partita cooperativa sincronizzata e verifica.
+
 ## Fatto
 
 - [x] Setup R3F + design system notte urbana cupa
