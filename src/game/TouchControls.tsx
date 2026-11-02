@@ -2,12 +2,14 @@ import { useRef, useState } from "react";
 import { input } from "./world";
 
 /** Brawl Stars-style touch controls: big move stick bottom-left,
- *  fire/reload/use cluster low on the right. No look stick — the
- *  view auto-faces the nearest zombie while firing. */
+ *  fire/reload/use cluster low on the right, and a drag area on the
+ *  right half that turns the view with your hand (swipe to look). */
 export function TouchControls() {
   const moveId = useRef(-1);
   const moveOrigin = useRef({ x: 0, y: 0 });
   const [moveKnob, setMoveKnob] = useState({ x: 0, y: 0, active: false });
+  const lookId = useRef(-1);
+  const lookLastX = useRef(0);
   const R = 64; // stick travel radius px
 
   const key = (code: string, down: boolean) =>
@@ -46,6 +48,24 @@ export function TouchControls() {
     }
   };
 
+  const onLookDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.clientX >= window.innerWidth / 2 && lookId.current < 0) {
+      lookId.current = e.pointerId;
+      lookLastX.current = e.clientX;
+      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    }
+  };
+
+  const onLookMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerId !== lookId.current) return;
+    input.yawDelta += (e.clientX - lookLastX.current) * 1.6;
+    lookLastX.current = e.clientX;
+  };
+
+  const onLookUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerId === lookId.current) lookId.current = -1;
+  };
+
   return (
     <>
       {/* touch surface for the move stick (left half only) */}
@@ -68,8 +88,28 @@ export function TouchControls() {
         </div>
       </div>
 
+      {/* swipe-to-look surface (right half, behind the buttons) */}
+      <div
+        className="pointer-events-auto absolute inset-y-0 left-1/2 right-0 touch-none"
+        onPointerDown={onLookDown}
+        onPointerMove={onLookMove}
+        onPointerUp={onLookUp}
+        onPointerCancel={onLookUp}
+      >
+        {/* faint hint that this side turns the view */}
+        <div className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 font-hud text-[10px] uppercase tracking-widest text-foreground/40">
+          Trascina per
+          <br />
+          la visuale
+        </div>
+      </div>
+
       {/* fire / reload / use cluster — low on the right, Brawl Stars style */}
-      <div className="pointer-events-auto absolute bottom-6 right-6 flex items-end gap-4 touch-none" onPointerDown={(e) => e.stopPropagation()} onPointerMove={(e) => e.stopPropagation()}>
+      <div
+        className="pointer-events-auto absolute bottom-6 right-6 z-10 flex items-end gap-4 touch-none"
+        onPointerDown={(e) => e.stopPropagation()}
+        onPointerMove={(e) => e.stopPropagation()}
+      >
         <div className="flex flex-col gap-3">
           <button
             className="h-16 w-16 rounded-full border-2 border-border/70 bg-card/60 font-hud text-[10px] uppercase tracking-widest text-foreground active:bg-card"
