@@ -5,17 +5,17 @@ export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Notte dei Morti — sparatutto zombie 3D a round" },
+      { title: "Notte dei Morti — zombie 3D e multiplayer cooperativo" },
       {
         name: "description",
         content:
-          "Sopravvivi a round infiniti di zombie in una città al buio: punti, colpi alla testa, armi da sbloccare. Gioca nel browser su desktop e mobile.",
+          "Sopravvivi alle orde zombie da solo o in squadra online fino a 3 giocatori. Stanze con codice, armi, perk e round infiniti su PC, telefono e controller.",
       },
-      { property: "og:title", content: "Notte dei Morti — sparatutto zombie 3D a round" },
+      { property: "og:title", content: "Notte dei Morti — zombie 3D in squadra fino a 3" },
       {
         property: "og:description",
         content:
-          "Round infiniti, orde di zombie e una stazione rifornimenti: sopravvivi il più possibile in questo sparatutto 3D nel browser.",
+          "Crea una stanza, invita fino a due amici e affronta insieme round infiniti di zombie nella città notturna.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

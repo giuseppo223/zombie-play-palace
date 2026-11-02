@@ -1,7 +1,8 @@
 # Roadmap — Zombie Night (3D)
 
 ## Multiplayer
-- [ ] Stanze online con codice, massimo 3 giocatori, partita cooperativa sincronizzata e verifica.
+- [x] Stanze online con codice, massimo 3 giocatori, coordinamento zombie/cancelli e giocatori remoti; verificati ingresso, rifiuto del quarto, avvio e movimento condiviso.
+- Verifica del combattimento multiplayer completo non conclusa: le finestre simultanee superano i tempi disponibili nell’ambiente di prova.
 
 ## Fatto
 

@@ -81,10 +81,13 @@ export function MultiplayerConnection() {
     if (!code) return;
     let stopped = false, subscribed = false, polling = false, last = '', lastAt = 0;
     const channel = supabase.channel(`zombie-coop:${code}`, { config: { broadcast: { self: false } } });
-    const send = (payload: Record<string, unknown>) => { if (subscribed) void channel.send({ type: 'broadcast', event: 'packet', payload }); };
+    const send = (payload: Record<string, unknown>) => { if (subscribed) void channel.send({ type: 'broadcast', event: 'packet', payload: { ...payload, sender: useNetwork.getState().room?.id } }); };
     network.damage = (id, amount) => send({ kind: 'damage', id, amount });
     channel.on('broadcast', { event: 'packet' }, ({ payload }) => {
       const r = useNetwork.getState().room; if (!r || !r.started) return;
+      if (!r.members.some(m => m.id === payload.sender)) return;
+      if (payload.kind !== 'state' && payload.sender !== r.hostId) return;
+      if (payload.kind === 'state' && payload.player?.id !== payload.sender) return;
       if (payload.kind === 'damage' && payload.id === r.id) useGame.getState().damage(Number(payload.amount) || 0);
       if (payload.kind === 'reward' && payload.id === r.id) { const g = useGame.getState(); if (payload.kill) g.addKill(Number(payload.points)); else g.addHit(Number(payload.points)); }
       if (payload.kind === 'gate-result' && payload.id === r.id) useGame.setState(s => ({ points: Math.max(0, s.points - Number(payload.cost)), notice: 'Cancello aperto' }));
@@ -126,7 +129,7 @@ export function MultiplayerConnection() {
         const r = await roomAction('heartbeat', code);
         if (stopped) return;
         const previous = useNetwork.getState().room;
-        if (!r.hostId && previous?.started) { useGame.getState().toMenu(); useNetwork.setState({ room: null, error: 'Il caposquadra ha lasciato la partita' }); return; }
+        if ((!r.hostId || !r.started) && previous?.started) { useGame.getState().toMenu(); useNetwork.setState({ room: null, error: 'Il caposquadra ha lasciato la partita' }); return; }
         useNetwork.setState({ room: r });
         for (const id of network.remotes.keys()) if (!r.members.some(m => m.id === id)) network.remotes.delete(id);
         if (r.started && !previous?.started) beginMatch(r);
