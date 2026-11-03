@@ -31,7 +31,7 @@ export const ubers: Uber[] = [
 ];
 
 /** Pack-a-Punch stands in the central square, dormant until every buckle is full. */
-export const PAP_POS = { x: -14 * MAP_SCALE, z: -10 * MAP_SCALE };
+export const PAP_POS = { x: -8 * MAP_SCALE, z: -6 * MAP_SCALE };
 export const COST_PAP = 5000;
 
 export function uberCharged(u: Uber) {

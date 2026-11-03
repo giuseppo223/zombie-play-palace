@@ -54,7 +54,7 @@ export const WEAPONS: WeaponDef[] = [
   { name: "Disintegratore", mag: 30, damage: 6, fireRate: 0.08, reload: 2.8, spread: 0.015, auto: true, mags: 4, pierce: true },
 ];
 
-export type PerkId = "jugger" | "speed" | "doubletap" | "stamin" | "revive" | "deadshot" | "vulture" | "cherry" | "mule" | "phd" | "widow";
+export type PerkId = "jugger" | "speed" | "doubletap" | "stamin" | "revive" | "deadshot" | "vulture" | "cherry" | "mule" | "phd" | "widow" | "pop";
 export const PERKS: { id: PerkId; name: string; desc: string; cost: number; color: string }[] = [
   { id: "jugger", name: "Juggernog", desc: "Vita massima 200", cost: 2500, color: "#c2413c" },
   { id: "speed", name: "Speed Cola", desc: "Ricarica 2x più veloce", cost: 3000, color: "#4fa66b" },
@@ -67,6 +67,7 @@ export const PERKS: { id: PerkId; name: string; desc: string; cost: number; colo
   { id: "mule", name: "Mule Kick", desc: "Caricatore +50%", cost: 2500, color: "#5e8f3a" },
   { id: "phd", name: "PhD Flopper", desc: "Danno subito -35%", cost: 2500, color: "#b04fc2" },
   { id: "widow", name: "Widow's Wine", desc: "Zombie vicini rallentati del 50%", cost: 3000, color: "#3a3a52" },
+  { id: "pop", name: "Elemental Pop", desc: "Danno dei colpi +25%", cost: 3000, color: "#e8743a" },
 ];
 
 export type PickupKind = "maxammo" | "instakill" | "double" | "nuke" | "speed";

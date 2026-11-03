@@ -131,7 +131,7 @@ export function Player() {
 
     for (const h of targets) {
       const z = h.z;
-      let dmg = def.damage * (h.head ? (g.perks.includes("deadshot") ? 5 : 2.5) : 1);
+      let dmg = def.damage * (h.head ? (g.perks.includes("deadshot") ? 5 : 2.5) : 1) * (g.perks.includes("pop") ? 1.25 : 1);
       if (world.boost.instakill > 0) dmg = z.boss ? z.maxHp * 0.08 : 999;
       if (isGuest()) { queueCommand({ kind: 'hit', index: world.zombies.indexOf(z), damage: dmg, head: h.head }); continue; }
       z.hp -= dmg;

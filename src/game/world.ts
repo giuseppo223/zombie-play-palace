@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { collideWalls, nearGate, resetGates, MAP_SCALE, R_OUTER } from "./zones";
+import { collideWalls, nearGate, nearWall, resetGates, MAP_SCALE, R_OUTER } from "./zones";
 import { resetUbers } from "./uber";
 
 export type Zombie = {
@@ -129,24 +129,34 @@ export const POI = {
   /** mystery box sits in the first unlockable zone (east quarter) */
   box: { x: 36 * S, z: 31 * S },
   /** pack-a-punch in the central square */
-  pap: { x: -14 * S, z: -10 * S },
+  pap: { x: -8 * S, z: -6 * S },
   uberA: { x: Math.cos((28 * Math.PI) / 180) * 52 * S, z: Math.sin((28 * Math.PI) / 180) * 52 * S },
   uberB: { x: Math.cos((118 * Math.PI) / 180) * 56 * S, z: Math.sin((118 * Math.PI) / 180) * 56 * S },
   uberC: { x: Math.cos((212 * Math.PI) / 180) * 85 * S, z: Math.sin((212 * Math.PI) / 180) * 85 * S },
   uberD: { x: Math.cos((303 * Math.PI) / 180) * 90 * S, z: Math.sin((303 * Math.PI) / 180) * 90 * S },
 };
 
-/** Each perk machine stands alone in its own corner of the city. */
-export const PERK_SPOTS: { id: "jugger" | "speed" | "doubletap" | "stamin" | "revive" | "deadshot" | "vulture" | "cherry" | "mule" | "phd" | "widow"; x: number; z: number }[] =
+/** Twelve perk machines, each alone in a different spot of the city, away from walls. */
+export const PERK_SPOTS: { id: "jugger" | "speed" | "doubletap" | "stamin" | "revive" | "deadshot" | "vulture" | "cherry" | "mule" | "phd" | "widow" | "pop"; x: number; z: number }[] =
   (() => {
-    const ids = ["jugger", "speed", "doubletap", "stamin", "revive", "deadshot", "vulture", "cherry", "mule", "phd", "widow"] as const;
+    const ids = ["jugger", "speed", "doubletap", "stamin", "revive", "deadshot", "vulture", "cherry", "mule", "phd", "widow", "pop"] as const;
     let seed = 909;
-    return ids.map((id, i) => {
-      // keep clear of the zone walls (radial walls every 45°, ring walls at r=28/70/115)
-      const a = (i / ids.length) * Math.PI * 2 + 0.2 + rand(seed++) * 0.2;
-      const r = (i % 2 === 0 ? 38 + rand(seed++) * 22 : 78 + rand(seed++) * 26) * S;
-      return { id, x: Math.cos(a) * r, z: Math.sin(a) * r };
+    const out: { id: (typeof ids)[number]; x: number; z: number }[] = [];
+    ids.forEach((id, i) => {
+      for (let t = 0; t < 200; t++) {
+        const a = (i / ids.length) * Math.PI * 2 + rand(seed++) * 0.4;
+        const r = 12 * S + rand(seed++) * (ARENA_RADIUS - 20 * S);
+        const x = Math.cos(a) * r;
+        const z = Math.sin(a) * r;
+        if (nearWall(x, z, 12) || nearGate(x, z, 12)) continue;
+        if (Object.values(POI).some((p) => Math.hypot(x - p.x, z - p.z) < 15)) continue;
+        if (out.some((p) => Math.hypot(x - p.x, z - p.z) < 80)) continue;
+        out.push({ id, x, z });
+        return;
+      }
+      out.push({ id, x: Math.cos(i) * 60, z: Math.sin(i) * 60 });
     });
+    return out;
   })();
 
 function nearPoi(x: number, z: number, r: number) {
@@ -173,7 +183,7 @@ export const buildings: Building[] = (() => {
       const z = Math.sin(a) * r;
       const tint = rand(seed++);
       if (Math.hypot(x, z) < 19) continue;
-      if (nearPoi(x, z, 9)) continue;
+      if (nearPoi(x, z, 9) || nearWall(x, z, 7)) continue;
       list.push({ x, z, w, d, h, tint });
     }
   }
@@ -195,7 +205,7 @@ export const props: Prop[] = (() => {
     const z = Math.sin(a) * r;
     const k = rand(seed++);
     const rot = rand(seed++) * Math.PI * 2;
-    if (nearPoi(x, z, 5)) continue;
+    if (nearPoi(x, z, 5) || nearWall(x, z, 3)) continue;
     list.push({ kind: k < 0.3 ? "car" : k < 0.65 ? "barrel" : "crate", x, z, rot });
   }
   return list;

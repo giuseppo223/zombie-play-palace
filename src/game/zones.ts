@@ -10,9 +10,13 @@ import * as THREE from "three";
  */
 /** Scale factor applied to the whole map layout (distances, not object sizes). */
 export const MAP_SCALE = 10;
-export const R_INNER = 28 * MAP_SCALE;
-export const R_MID = 70 * MAP_SCALE;
-export const R_OUTER = 115 * MAP_SCALE;
+/** Ring boundaries (centre square + 4 rings) and how many sector zones each ring has. */
+export const RING_B = [0, 18, 42, 70, 95, 115].map((r) => r * MAP_SCALE);
+export const RING_N = [1, 6, 10, 14, 18];
+const RING_OFF = RING_N.map((_, i) => RING_N.slice(0, i).reduce((a, b) => a + b, 0));
+export const ZONE_COUNT = RING_N.reduce((a, b) => a + b, 0);
+export const R_INNER = RING_B[1]!;
+export const R_OUTER = RING_B[RING_B.length - 1]!;
 export const WALL_H = 3.6;
 export const WALL_T = 0.7;
 export const GATE_W = 5.2;
@@ -36,20 +40,15 @@ export type Gate = {
   seg: Seg;
 };
 
+const NAME_POOL = [
+  "Quartiere Est", "Quartiere Nord", "Quartiere Ovest", "Quartiere Sud", "Porto", "Zona Industriale",
+  "Ospedale", "Stazione Ferroviaria", "Cimitero", "Mercato", "Periferia", "Cantiere", "Università",
+  "Stadio", "Raffineria", "Centrale Elettrica", "Borgo Vecchio", "Parco", "Darsena", "Aeroporto",
+  "Prigione", "Fabbrica", "Cattedrale", "Metropolitana",
+];
 export const ZONE_NAMES = [
   "Piazza Centrale",
-  "Quartiere Est",
-  "Quartiere Nord",
-  "Quartiere Ovest",
-  "Quartiere Sud",
-  "Porto",
-  "Zona Industriale",
-  "Ospedale",
-  "Stazione Ferroviaria",
-  "Cimitero",
-  "Mercato",
-  "Periferia",
-  "Cantiere",
+  ...Array.from({ length: ZONE_COUNT - 1 }, (_, i) => NAME_POOL[i % NAME_POOL.length] + (i >= NAME_POOL.length ? " II" : "")),
 ];
 
 const TAU = Math.PI * 2;
@@ -59,13 +58,29 @@ function normAng(a: number) {
   return a < 0 ? a + TAU : a;
 }
 
+function ringOf(r: number) {
+  for (let i = 1; i < RING_B.length; i++) if (r < RING_B[i]!) return i - 1;
+  return RING_N.length - 1;
+}
+
 /** Which zone contains world point (x, z). */
 export function zoneAt(x: number, z: number): number {
+  const ring = ringOf(Math.hypot(x, z));
+  if (ring === 0) return 0;
+  const n = RING_N[ring]!;
+  const sec = Math.min(n - 1, Math.floor(normAng(Math.atan2(z, x)) / (TAU / n)));
+  return RING_OFF[ring]! + sec;
+}
+
+/** True when (x, z) is within `m` of a zone wall line. */
+export function nearWall(x: number, z: number, m: number) {
   const r = Math.hypot(x, z);
-  if (r < R_INNER) return 0;
-  const ang = normAng(Math.atan2(z, x));
-  if (r < R_MID) return 1 + Math.min(3, Math.floor(ang / (Math.PI / 2)));
-  return 5 + Math.min(7, Math.floor(ang / (Math.PI / 4)));
+  for (let i = 1; i < RING_B.length; i++) if (Math.abs(r - RING_B[i]!) < m) return true;
+  const ring = ringOf(r);
+  if (ring === 0) return false;
+  const span = TAU / RING_N[ring]!;
+  const f = (normAng(Math.atan2(z, x)) / span) % 1;
+  return Math.min(f, 1 - f) * span * r < m;
 }
 
 /** Random point inside a zone, at least `minDist` from (px, pz) when possible. */
@@ -91,14 +106,14 @@ export function randomPointInZone(zone: number, px: number, pz: number, minDist:
       x = Math.cos(a) * r;
       z = Math.sin(a) * r;
     } else {
-      const ring1 = zone <= 4;
-      const n = ring1 ? 4 : 8;
-      const idx = ring1 ? zone - 1 : zone - 5;
-      const span = TAU / n;
-      const pad = 0.1;
+      let ring = 1;
+      while (ring < RING_N.length - 1 && zone >= RING_OFF[ring + 1]!) ring++;
+      const idx = zone - RING_OFF[ring]!;
+      const span = TAU / RING_N[ring]!;
+      const pad = 0.05;
       const a = idx * span + pad + Math.random() * (span - pad * 2);
-      const r0 = (ring1 ? R_INNER : R_MID) + 3;
-      const r1 = (ring1 ? R_MID : R_OUTER) - 3;
+      const r0 = RING_B[ring]! + 3;
+      const r1 = RING_B[ring + 1]! - 3;
       const r = r0 + Math.random() * (r1 - r0);
       x = Math.cos(a) * r;
       z = Math.sin(a) * r;
@@ -163,19 +178,20 @@ function radialWithGate(ang: number, r0: number, r1: number, left: number, right
 }
 
 // --- build geometry (gate ids are stable in this order) ---
-// 0..3   inner ring arcs: center <-> zone 1..4
-for (let k = 0; k < 4; k++) arcWithGate(R_INNER, (k * Math.PI) / 2, ((k + 1) * Math.PI) / 2, 0, 1 + k);
-// 4..7   radial walls in the middle ring at 0/90/180/270 degrees
-for (let k = 0; k < 4; k++) {
-  const prev = 1 + ((k + 3) % 4);
-  radialWithGate((k * Math.PI) / 2, R_INNER, R_MID, prev, 1 + k);
-}
-// 8..15  middle ring arcs: zone 1..4 <-> zone 5..12
-for (let j = 0; j < 8; j++) arcWithGate(R_MID, (j * Math.PI) / 4, ((j + 1) * Math.PI) / 4, 1 + Math.floor(j / 2), 5 + j);
-// 16..23 radial walls in the outer ring every 45 degrees
-for (let j = 0; j < 8; j++) {
-  const prev = 5 + ((j + 7) % 8);
-  radialWithGate((j * Math.PI) / 4, R_MID, R_OUTER, prev, 5 + j);
+for (let ring = 1; ring < RING_N.length; ring++) {
+  const n = RING_N[ring]!;
+  const off = RING_OFF[ring]!;
+  // radial walls between neighbouring sectors of this ring
+  for (let k = 0; k < n; k++) radialWithGate((k * TAU) / n, RING_B[ring]!, RING_B[ring + 1]!, off + ((k + n - 1) % n), off + k);
+  // arc wall on the inner edge of this ring, one gate per outer sector
+  for (let k = 0; k < n; k++) {
+    const a0 = (k * TAU) / n;
+    const a1 = ((k + 1) * TAU) / n;
+    const r = RING_B[ring]!;
+    const mid = (a0 + a1) / 2;
+    const inner = zoneAt(Math.cos(mid) * (r - 5), Math.sin(mid) * (r - 5));
+    arcWithGate(r, a0, a1, inner, off + k);
+  }
 }
 
 /** Every gate opens; each one opened raises the price of the next, up to 10000. */
