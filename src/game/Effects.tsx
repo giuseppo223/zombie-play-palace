@@ -224,6 +224,11 @@ export function Atmosphere() {
   useFrame((_, delta) => {
     const l = light.current;
     if (!l) return;
+    // keep the shadow frustum centred on the player across the big map
+    const pp = world.playerPos;
+    l.position.set(pp.x - 30, 40, pp.z - 20);
+    l.target.position.set(pp.x, 0, pp.z);
+    l.target.updateMatrixWorld();
     next.current -= delta;
     if (next.current <= 0) {
       l.intensity = 1.6;
