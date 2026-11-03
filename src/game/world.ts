@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { collideWalls, nearGate, resetGates } from "./zones";
+import { collideWalls, nearGate, resetGates, MAP_SCALE, R_OUTER } from "./zones";
 import { resetUbers } from "./uber";
 
 export type Zombie = {
@@ -36,7 +36,8 @@ export type Pickup = {
 
 export type Obstacle = { x: number; z: number; hx: number; hz: number; rot?: number };
 
-export const ARENA_RADIUS = 115;
+export const ARENA_RADIUS = R_OUTER;
+const S = MAP_SCALE;
 export const MAX_ZOMBIES = 40;
 export const MAX_TRACERS = 24;
 export const MAX_PICKUPS = 6;
@@ -124,15 +125,15 @@ export type Building = {
 
 /** Points of interest kept clear of buildings/props. */
 export const POI = {
-  station: { x: 11, z: 11 },
+  station: { x: 11 * S, z: 11 * S },
   /** mystery box sits in the first unlockable zone (east quarter) */
-  box: { x: 36, z: 31 },
+  box: { x: 36 * S, z: 31 * S },
   /** pack-a-punch in the central square */
-  pap: { x: -14, z: -10 },
-  uberA: { x: Math.cos((28 * Math.PI) / 180) * 52, z: Math.sin((28 * Math.PI) / 180) * 52 },
-  uberB: { x: Math.cos((118 * Math.PI) / 180) * 56, z: Math.sin((118 * Math.PI) / 180) * 56 },
-  uberC: { x: Math.cos((212 * Math.PI) / 180) * 85, z: Math.sin((212 * Math.PI) / 180) * 85 },
-  uberD: { x: Math.cos((303 * Math.PI) / 180) * 90, z: Math.sin((303 * Math.PI) / 180) * 90 },
+  pap: { x: -14 * S, z: -10 * S },
+  uberA: { x: Math.cos((28 * Math.PI) / 180) * 52 * S, z: Math.sin((28 * Math.PI) / 180) * 52 * S },
+  uberB: { x: Math.cos((118 * Math.PI) / 180) * 56 * S, z: Math.sin((118 * Math.PI) / 180) * 56 * S },
+  uberC: { x: Math.cos((212 * Math.PI) / 180) * 85 * S, z: Math.sin((212 * Math.PI) / 180) * 85 * S },
+  uberD: { x: Math.cos((303 * Math.PI) / 180) * 90 * S, z: Math.sin((303 * Math.PI) / 180) * 90 * S },
 };
 
 /** Each perk machine stands alone in its own corner of the city. */
@@ -143,7 +144,7 @@ export const PERK_SPOTS: { id: "jugger" | "speed" | "doubletap" | "stamin" | "re
     return ids.map((id, i) => {
       // keep clear of the zone walls (radial walls every 45°, ring walls at r=28/70/115)
       const a = (i / ids.length) * Math.PI * 2 + 0.2 + rand(seed++) * 0.2;
-      const r = i % 2 === 0 ? 38 + rand(seed++) * 22 : 78 + rand(seed++) * 26;
+      const r = (i % 2 === 0 ? 38 + rand(seed++) * 22 : 78 + rand(seed++) * 26) * S;
       return { id, x: Math.cos(a) * r, z: Math.sin(a) * r };
     });
   })();
@@ -157,15 +158,17 @@ function nearPoi(x: number, z: number, r: number) {
 export const buildings: Building[] = (() => {
   const list: Building[] = [];
   let seed = 1;
-  for (let ring = 0; ring < 8; ring++) {
-    const count = 8 + ring * 4;
-    const radius = 26 + ring * 12;
+  // rings of blocks every 16m out to the edge, density following the circumference
+  const ringCount = Math.floor((ARENA_RADIUS - 30) / 16);
+  for (let ring = 0; ring < ringCount; ring++) {
+    const radius = 26 + ring * 16;
+    const count = Math.max(8, Math.floor((Math.PI * 2 * radius) / 30));
     for (let i = 0; i < count; i++) {
-      const a = (i / count) * Math.PI * 2 + rand(seed++) * 0.25;
+      const a = (i / count) * Math.PI * 2 + (rand(seed++) * 0.25 * 30) / radius;
       const r = radius + rand(seed++) * 6;
       const w = 5 + rand(seed++) * 5;
       const d = 5 + rand(seed++) * 5;
-      const h = 7 + rand(seed++) * 26 + ring * 4;
+      const h = 7 + rand(seed++) * 26 + Math.min(28, ring * 0.5);
       const x = Math.cos(a) * r;
       const z = Math.sin(a) * r;
       const tint = rand(seed++);
@@ -185,7 +188,7 @@ export type Prop = { kind: "car" | "barrel" | "crate"; x: number; z: number; rot
 export const props: Prop[] = (() => {
   const list: Prop[] = [];
   let seed = 500;
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 100 * S * 6; i++) {
     const a = rand(seed++) * Math.PI * 2;
     const r = 8 + rand(seed++) * (ARENA_RADIUS - 12);
     const x = Math.cos(a) * r;
@@ -204,12 +207,12 @@ props.forEach((p) => {
   else world.obstacles.push({ x: p.x, z: p.z, hx: 0.45, hz: 0.45 });
 });
 
-// street lamps (same layout as City.tsx)
-[
-  { r: 20, n: 10 },
-  { r: 58, n: 16 },
-  { r: 96, n: 22 },
-].forEach(({ r, n }, ri) => {
+// street lamps (shared with City.tsx)
+export const LAMP_RINGS = [
+  { r: 20, n: 10, every: 2 },
+  ...[58, 96, 160, 240, 330, 430, 540, 660, 780, 900, 1020, 1120].map((r) => ({ r, n: Math.floor(r / 4), every: 99 })),
+];
+LAMP_RINGS.forEach(({ r, n }, ri) => {
   for (let i = 0; i < n; i++) {
     const a = (i / n) * Math.PI * 2 + ri * 0.3;
     world.obstacles.push({ x: Math.cos(a) * r, z: Math.sin(a) * r, hx: 0.15, hz: 0.15 });
@@ -224,9 +227,32 @@ for (const [k, p] of Object.entries(POI)) {
 PERK_SPOTS.forEach((p) => world.obstacles.push({ x: p.x, z: p.z, hx: 0.65, hz: 0.65 }));
 
 /** Push a circle of `radius` out of every obstacle and keep it inside the arena. */
+const CELL = 16;
+let grid: Map<number, Obstacle[]> | null = null;
+let gridSize = 0;
+const cellKey = (cx: number, cz: number) => (cx + 1000) * 4096 + (cz + 1000);
+function getGrid() {
+  if (grid && gridSize === world.obstacles.length) return grid;
+  grid = new Map();
+  gridSize = world.obstacles.length;
+  for (const o of world.obstacles) {
+    const k = cellKey(Math.floor(o.x / CELL), Math.floor(o.z / CELL));
+    let arr = grid.get(k);
+    if (!arr) grid.set(k, (arr = []));
+    arr.push(o);
+  }
+  return grid;
+}
+
 export function resolveCollisions(pos: THREE.Vector3, radius: number) {
   collideWalls(pos, radius);
-  for (const o of world.obstacles) {
+  const g = getGrid();
+  const cx0 = Math.floor(pos.x / CELL);
+  const cz0 = Math.floor(pos.z / CELL);
+  for (let gx = cx0 - 1; gx <= cx0 + 1; gx++) for (let gz = cz0 - 1; gz <= cz0 + 1; gz++) {
+  const cell = g.get(cellKey(gx, gz));
+  if (!cell) continue;
+  for (const o of cell) {
     const wx = pos.x - o.x;
     const wz = pos.z - o.z;
     const reach = Math.max(o.hx, o.hz) + radius + 0.5;
@@ -244,6 +270,7 @@ export function resolveCollisions(pos: THREE.Vector3, radius: number) {
       pos.x = o.x + dx * c + dz * sn;
       pos.z = o.z - dx * sn + dz * c;
     }
+  }
   }
   const d = Math.hypot(pos.x, pos.z);
   if (d > ARENA_RADIUS) {

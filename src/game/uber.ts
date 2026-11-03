@@ -1,3 +1,4 @@
+import { MAP_SCALE } from "./zones";
 import * as THREE from "three";
 
 /**
@@ -19,7 +20,7 @@ export type Uber = {
 
 function polar(deg: number, r: number) {
   const a = (deg * Math.PI) / 180;
-  return { x: Math.cos(a) * r, z: Math.sin(a) * r };
+  return { x: Math.cos(a) * r * MAP_SCALE, z: Math.sin(a) * r * MAP_SCALE };
 }
 
 export const ubers: Uber[] = [
@@ -30,7 +31,7 @@ export const ubers: Uber[] = [
 ];
 
 /** Pack-a-Punch stands in the central square, dormant until every buckle is full. */
-export const PAP_POS = { x: -14, z: -10 };
+export const PAP_POS = { x: -14 * MAP_SCALE, z: -10 * MAP_SCALE };
 export const COST_PAP = 5000;
 
 export function uberCharged(u: Uber) {
