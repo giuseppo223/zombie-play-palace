@@ -8,9 +8,11 @@ import * as THREE from "three";
  * Every boundary between two zones is a wall with one gate in it. Only some
  * gates can be bought open; the others are welded shut forever.
  */
-export const R_INNER = 28;
-export const R_MID = 70;
-export const R_OUTER = 115;
+/** Scale factor applied to the whole map layout (distances, not object sizes). */
+export const MAP_SCALE = 10;
+export const R_INNER = 28 * MAP_SCALE;
+export const R_MID = 70 * MAP_SCALE;
+export const R_OUTER = 115 * MAP_SCALE;
 export const WALL_H = 3.6;
 export const WALL_T = 0.7;
 export const GATE_W = 5.2;
@@ -68,6 +70,17 @@ export function zoneAt(x: number, z: number): number {
 
 /** Random point inside a zone, at least `minDist` from (px, pz) when possible. */
 export function randomPointInZone(zone: number, px: number, pz: number, minDist: number, out: THREE.Vector3) {
+  // prefer spots fairly close to the player so zombies don't spawn kilometres away
+  for (let i = 0; i < 24; i++) {
+    const a = Math.random() * TAU;
+    const r = minDist + Math.random() * 25;
+    const x = px + Math.cos(a) * r;
+    const z = pz + Math.sin(a) * r;
+    if (Math.hypot(x, z) < R_OUTER - 4 && zoneAt(x, z) === zone) {
+      out.set(x, 0, z);
+      return out;
+    }
+  }
   let bestD = -1;
   for (let i = 0; i < 12; i++) {
     let x: number;
@@ -105,7 +118,7 @@ export const gates: Gate[] = [];
 
 function arc(r: number, a0: number, a1: number) {
   const len = (a1 - a0) * r;
-  const n = Math.max(1, Math.ceil(len / 3.5));
+  const n = Math.max(1, Math.ceil(len / 10));
   for (let i = 0; i < n; i++) {
     const t0 = a0 + ((a1 - a0) * i) / n;
     const t1 = a0 + ((a1 - a0) * (i + 1)) / n;
