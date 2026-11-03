@@ -9,34 +9,37 @@ const wire = new THREE.MeshStandardMaterial({ color: "#5a5f66", roughness: 0.5, 
 const steel = new THREE.MeshStandardMaterial({ color: "#1a1e24", roughness: 0.45, metalness: 0.85 });
 const rust = new THREE.MeshStandardMaterial({ color: "#4a2f1f", roughness: 0.9, metalness: 0.4 });
 
-/** Concrete barricade walls between zones, one box per segment. */
+/** Concrete barricade walls between zones, drawn as instanced segments. */
 function Walls() {
-  const items = useMemo(
-    () =>
-      walls.map((s) => {
+  const meshes = useMemo(() => {
+    const parts = [
+      { geo: new THREE.BoxGeometry(1, WALL_H, WALL_T), mat: concrete, y: WALL_H / 2, shadow: true },
+      { geo: new THREE.BoxGeometry(1, 0.8, WALL_T + 0.5), mat: concreteTop, y: 0.4, shadow: false },
+      { geo: new THREE.BoxGeometry(1, 0.12, 0.12), mat: wire, y: WALL_H + 0.25, shadow: false },
+    ];
+    const o = new THREE.Object3D();
+    return parts.map((p) => {
+      const m = new THREE.InstancedMesh(p.geo, p.mat, walls.length);
+      walls.forEach((s, i) => {
         const dx = s.bx - s.ax;
         const dz = s.bz - s.az;
-        const len = Math.hypot(dx, dz) + 0.25;
-        return { x: (s.ax + s.bx) / 2, z: (s.az + s.bz) / 2, len, yaw: -Math.atan2(dz, dx) };
-      }),
-    [],
-  );
+        o.position.set((s.ax + s.bx) / 2, p.y, (s.az + s.bz) / 2);
+        o.rotation.set(0, -Math.atan2(dz, dx), 0);
+        o.scale.set(Math.hypot(dx, dz) + 0.25, 1, 1);
+        o.updateMatrix();
+        m.setMatrixAt(i, o.matrix);
+      });
+      m.instanceMatrix.needsUpdate = true;
+      m.computeBoundingSphere();
+      m.castShadow = p.shadow;
+      m.receiveShadow = true;
+      return m;
+    });
+  }, []);
   return (
     <group>
-      {items.map((w, i) => (
-        <group key={i} position={[w.x, 0, w.z]} rotation-y={w.yaw}>
-          <mesh position={[0, WALL_H / 2, 0]} castShadow receiveShadow material={concrete}>
-            <boxGeometry args={[w.len, WALL_H, WALL_T]} />
-          </mesh>
-          {/* jersey-barrier base */}
-          <mesh position={[0, 0.4, 0]} material={concreteTop}>
-            <boxGeometry args={[w.len, 0.8, WALL_T + 0.5]} />
-          </mesh>
-          {/* barbed wire along the top */}
-          <mesh position={[0, WALL_H + 0.25, 0]} rotation-z={Math.PI / 2} material={wire}>
-            <cylinderGeometry args={[0.06, 0.06, w.len, 5]} />
-          </mesh>
-        </group>
+      {meshes.map((m, i) => (
+        <primitive key={i} object={m} />
       ))}
     </group>
   );

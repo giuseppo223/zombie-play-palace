@@ -1,10 +1,8 @@
 import * as THREE from "three";
 
 /**
- * The city is split into 13 zones:
- *  - zone 0: the central square (r < R_INNER)
- *  - zones 1-4: four quarter sectors of the middle ring (R_INNER..R_MID)
- *  - zones 5-12: eight sectors of the outer ring (R_MID..R_OUTER)
+ * The city is split into a central square plus sector zones on concentric
+ * rings (see RING_B / RING_N).
  * Every boundary between two zones is a wall with one gate in it. Only some
  * gates can be bought open; the others are welded shut forever.
  */
