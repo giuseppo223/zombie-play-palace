@@ -5,6 +5,7 @@ import { world, resolveCollisions, MAX_ZOMBIES, ARENA_RADIUS, type Zombie } from
 import { zoneAt, randomPointInZone } from "./zones";
 import { useGame } from "./store";
 import { isGuest, network, useNetwork } from "./network-state";
+import { BOSS_DEFS, chooseBoss } from "./bosses";
 
 const SKIN = "#6f7f63";
 const CLOTH = "#2b3138";
@@ -41,6 +42,11 @@ function ZombieMesh({ index }: { index: number }) {
   const bossLegR = useRef<THREE.Mesh>(null);
   const bossBody = useRef<THREE.Group>(null);
   const bossLight = useRef<THREE.PointLight>(null);
+  const core = useRef<THREE.MeshStandardMaterial>(null);
+  const warning = useRef<THREE.Mesh>(null);
+  const claws = useRef<THREE.Group>(null);
+  const coils = useRef<THREE.Group>(null);
+  const crown = useRef<THREE.Group>(null);
 
   useFrame((state) => {
     const g = group.current;
@@ -53,6 +59,17 @@ function ZombieMesh({ index }: { index: number }) {
     g.visible = true;
     if (normal.current) normal.current.visible = !z.boss;
     if (bossG.current) bossG.current.visible = z.boss;
+    const def = BOSS_DEFS[z.bossKind];
+    if (claws.current) claws.current.visible = z.bossKind === "charger";
+    if (coils.current) coils.current.visible = z.bossKind === "storm";
+    if (crown.current) crown.current.visible = z.bossKind === "summoner";
+    if (core.current) { core.current.color.set(def.color); core.current.emissive.set(def.color); }
+    if (warning.current) {
+      warning.current.visible = z.boss && z.dying === 0 && z.abilityWindup > 0;
+      warning.current.scale.setScalar((z.bossKind === "storm" ? 8 : 3) / z.scale);
+      (warning.current.material as THREE.MeshBasicMaterial).color.set(def.color);
+    }
+    if (bossLight.current) bossLight.current.color.set(def.color);
     const t = state.clock.elapsedTime;
 
     if (z.dying > 0) {
@@ -169,8 +186,17 @@ function ZombieMesh({ index }: { index: number }) {
           {/* glowing core */}
           <mesh position={[0, 0.25, 0.33]}>
             <boxGeometry args={[0.18, 0.18, 0.04]} />
-            <meshStandardMaterial color="#ff3b1f" emissive="#ff3b1f" emissiveIntensity={4} toneMapped={false} />
+            <meshStandardMaterial ref={core} color={BOSS_DEFS.brute.color} emissive={BOSS_DEFS.brute.color} emissiveIntensity={4} toneMapped={false} />
           </mesh>
+          <group ref={claws} visible={false}>
+            {[-0.9, 0.9].map(x => <mesh key={x} position={[x, 0.15, 0.9]} rotation-x={Math.PI / 2}><coneGeometry args={[0.18, 1.1, 5]} /><meshStandardMaterial color={BOSS_DEFS.charger.color} metalness={0.7} roughness={0.3} /></mesh>)}
+          </group>
+          <group ref={coils} visible={false}>
+            {[-0.6, 0.6].map(x => <mesh key={x} position={[x, 0.9, 0]}><torusGeometry args={[0.3, 0.07, 6, 12]} /><meshBasicMaterial color={BOSS_DEFS.storm.color} toneMapped={false} /></mesh>)}
+          </group>
+          <group ref={crown} visible={false}>
+            {[-0.24, 0, 0.24].map(x => <mesh key={x} position={[x, 1.3, 0.12]}><coneGeometry args={[0.1, 0.5, 5]} /><meshBasicMaterial color={BOSS_DEFS.summoner.color} toneMapped={false} /></mesh>)}
+          </group>
           <pointLight ref={bossLight} position={[0, 0.3, 0.6]} color="#ff4a2a" distance={7} decay={2} intensity={6} />
           {/* huge arms */}
           <group ref={bossArmL} position={[-0.62, 0.5, 0]}>
@@ -204,6 +230,10 @@ function ZombieMesh({ index }: { index: number }) {
           <meshStandardMaterial color={BOSS_CLOTH} roughness={0.95} />
         </mesh>
       </group>
+      <mesh ref={warning} visible={false} position={[0, 0.04, 0]} rotation-x={-Math.PI / 2}>
+        <ringGeometry args={[0.92, 1, 48]} />
+        <meshBasicMaterial color={BOSS_DEFS.storm.color} transparent opacity={0.65} toneMapped={false} depthWrite={false} side={THREE.DoubleSide} />
+      </mesh>
     </group>
   );
 }
@@ -228,15 +258,22 @@ function spawn(z: Zombie, round: number, seed: number, boss = false) {
   z.attackCd = 0;
   z.phase = seed * 1.7;
   z.boss = boss;
+  z.bossKind = boss ? chooseBoss() : "brute";
+  z.abilityCd = 3;
+  z.abilityWindup = 0;
+  z.chargeTime = 0;
+  z.stuck = 0;
   const st = roundStats(round);
 
   if (boss) {
     const tier = Math.floor(round / BOSS_EVERY); // 1 at round 10, 2 at round 20…
-    z.maxHp = Math.round(120 * tier * st.hpMul);
+    const def = BOSS_DEFS[z.bossKind];
+    z.maxHp = Math.round(120 * tier * st.hpMul * def.hp);
     z.hp = z.maxHp;
-    z.speed = 1.9 + tier * 0.15;
-    z.scale = 1.9 + Math.min(0.6, tier * 0.1);
+    z.speed = (1.9 + tier * 0.15) * def.speed;
+    z.scale = (1.9 + Math.min(0.6, tier * 0.1)) * def.scale;
     z.damage = 28 + tier * 6;
+    useGame.setState({ notice: `${def.name.toUpperCase()} IN ARRIVO` });
     return;
   }
 
@@ -338,6 +375,56 @@ export function ZombieSystem() {
       const dist = dirs.toPlayer.length() || 1;
       dirs.toPlayer.divideScalar(dist);
       z.facing = Math.atan2(dirs.toPlayer.x, dirs.toPlayer.z) + Math.PI;
+
+      // Only the coordinator resolves abilities; guests receive visuals and damage packets.
+      const sameZone = zoneAt(z.pos.x, z.pos.z) === playerZone;
+      if (z.boss && z.bossKind !== "brute") {
+        const def = BOSS_DEFS[z.bossKind];
+        z.abilityCd = Math.max(0, z.abilityCd - delta);
+        if (z.abilityWindup > 0) {
+          z.abilityWindup = Math.max(0, z.abilityWindup - delta);
+          if (z.abilityWindup === 0) {
+            z.abilityCd = def.cooldown;
+            if (z.bossKind === "charger") { z.chargeTime = 1.2; z.chargeX = dirs.toPlayer.x; z.chargeZ = dirs.toPlayer.z; }
+            if (z.bossKind === "storm") {
+              const hit = (id: string, x: number, zz: number) => {
+                if (zoneAt(x, zz) !== zoneAt(z.pos.x, z.pos.z) || Math.hypot(x-z.pos.x, zz-z.pos.z) > def.range) return;
+                if (room && id !== room.id) network.damage(id, z.damage * 0.7);
+                else { g.damage(z.damage * 0.7); world.hurt = 1; world.shake = 0.8; }
+              };
+              if (g.health > 0) hit(room?.id ?? '', world.playerPos.x, world.playerPos.z);
+              for (const p of network.remotes.values()) if (p.health > 0 && p.phase === 'playing') hit(p.id, p.x, p.z);
+            }
+            if (z.bossKind === "summoner") {
+              for (let i = 0; i < 3; i++) {
+                const slot = world.zombies.find(o => !o.active);
+                if (!slot) break;
+                spawn(slot, g.round, Math.random() * 10);
+                randomPointInZone(playerZone, tx, tz, 8, slot.pos);
+                resolveCollisions(slot.pos, 0.6);
+              }
+            }
+          }
+          continue;
+        }
+        if (z.abilityCd === 0 && sameZone && dist <= def.range && z.chargeTime === 0) {
+          z.abilityWindup = 1.4;
+          useGame.setState({ notice: z.bossKind === "charger" ? "PREPARA LA CARICA!" : z.bossKind === "storm" ? "SCARICA ELETTRICA!" : "IL NECROMANTE EVOCA ZOMBIE!" });
+          continue;
+        }
+        if (z.chargeTime > 0) {
+          z.chargeTime = Math.max(0, z.chargeTime - delta);
+          z.pos.x += z.chargeX * 14 * delta;
+          z.pos.z += z.chargeZ * 14 * delta;
+          resolveCollisions(z.pos, 0.9);
+          if (Math.hypot(tx-z.pos.x, tz-z.pos.z) < 2.3 && z.attackCd <= 0) {
+            z.attackCd = 1.6; z.chargeTime = 0;
+            if (room && targetId !== room.id) network.damage(targetId, z.damage * 1.3);
+            else { g.damage(z.damage * 1.3); world.hurt = 1; world.shake = 1; }
+          }
+          continue;
+        }
+      }
 
       const reach = z.boss ? 2.3 : 1.15;
       if (dist > reach) {

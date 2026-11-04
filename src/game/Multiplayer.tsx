@@ -62,7 +62,7 @@ export function MultiplayerLobby({ onMode }: { onMode: (mode: ControlMode) => vo
 type Snapshot = ReturnType<typeof makeSnapshot>;
 function makeSnapshot() {
   const g = useGame.getState();
-  return { round: g.round, left: g.zombiesLeft, boss: g.bossHp, gates: gates.map(x => x.open), charges: ubers.map(x => x.charge), zombies: world.zombies.map(z => ({ active: z.active, x: z.pos.x, z: z.pos.z, hp: z.hp, maxHp: z.maxHp, facing: z.facing, dying: z.dying, boss: z.boss, scale: z.scale, phase: z.phase, hitFlash: z.hitFlash, damage: z.damage, speed: z.speed })), pickups: world.pickups.map(p => ({ active: p.active, x: p.pos.x, z: p.pos.z, kind: p.kind, life: p.life })) };
+  return { round: g.round, left: g.zombiesLeft, boss: g.bossHp, gates: gates.map(x => x.open), charges: ubers.map(x => x.charge), zombies: world.zombies.map(z => ({ active: z.active, x: z.pos.x, z: z.pos.z, hp: z.hp, maxHp: z.maxHp, facing: z.facing, dying: z.dying, boss: z.boss, bossKind: z.bossKind, abilityWindup: z.abilityWindup, chargeTime: z.chargeTime, scale: z.scale, phase: z.phase, hitFlash: z.hitFlash, damage: z.damage, speed: z.speed })), pickups: world.pickups.map(p => ({ active: p.active, x: p.pos.x, z: p.pos.z, kind: p.kind, life: p.life })) };
 }
 function applySnapshot(s: Snapshot) {
   if (!s || !Array.isArray(s.zombies)) return;

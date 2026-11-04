@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { collideWalls, nearGate, nearWall, resetGates, MAP_SCALE, R_OUTER } from "./zones";
 import { resetUbers } from "./uber";
+import type { BossKind } from "./bosses";
+import type { PerkId } from "./store";
 
 export type Zombie = {
   active: boolean;
@@ -17,6 +19,12 @@ export type Zombie = {
   /** damage dealt per hit */
   damage: number;
   boss: boolean;
+  bossKind: BossKind;
+  abilityCd: number;
+  abilityWindup: number;
+  chargeTime: number;
+  chargeX: number;
+  chargeZ: number;
   /** seconds spent far away in another zone (walls in the way) */
   stuck: number;
 };
@@ -96,6 +104,12 @@ for (let i = 0; i < MAX_ZOMBIES; i++) {
     scale: 1,
     damage: 9,
     boss: false,
+    bossKind: "brute",
+    abilityCd: 0,
+    abilityWindup: 0,
+    chargeTime: 0,
+    chargeX: 0,
+    chargeZ: 0,
     stuck: 0,
   });
 }
@@ -136,10 +150,10 @@ export const POI = {
   uberD: { x: Math.cos((303 * Math.PI) / 180) * 90 * S, z: Math.sin((303 * Math.PI) / 180) * 90 * S },
 };
 
-/** Twelve perk machines, each alone in a different spot of the city, away from walls. */
-export const PERK_SPOTS: { id: "jugger" | "speed" | "doubletap" | "stamin" | "revive" | "deadshot" | "vulture" | "cherry" | "mule" | "phd" | "widow" | "pop"; x: number; z: number }[] =
+/** Seeded random positions stay identical for every player in a room. */
+export const PERK_SPOTS: { id: PerkId; x: number; z: number }[] =
   (() => {
-    const ids = ["jugger", "speed", "doubletap", "stamin", "revive", "deadshot", "vulture", "cherry", "mule", "phd", "widow", "pop"] as const;
+    const ids = ["jugger", "speed", "doubletap", "stamin", "revive", "deadshot", "vulture", "cherry", "mule", "phd", "widow", "pop", "blood", "scavenger", "precision", "breach", "timeslip"] as const;
     let seed = 909;
     const out: { id: (typeof ids)[number]; x: number; z: number }[] = [];
     ids.forEach((id, i) => {
@@ -309,6 +323,10 @@ export function resetWorld() {
   world.zombies.forEach((z) => {
     z.active = false;
     z.dying = 0;
+    z.bossKind = "brute";
+    z.abilityCd = 0;
+    z.abilityWindup = 0;
+    z.chargeTime = 0;
   });
   world.tracers.forEach((t) => (t.life = 0));
   world.pickups.forEach((p) => (p.active = false));

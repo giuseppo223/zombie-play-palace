@@ -6,6 +6,8 @@
 
 ## Fatto
 
+- [ ] Aggiungere cinque perk casualmente distribuiti e tre nuovi boss con abilità distinte; verificare effetti e partita.
+
 - [x] Setup R3F + design system notte urbana cupa
 - [x] Città procedurale (palazzi, lampioni, auto, barili)
 - [x] Zombie con IA di inseguimento, ondate, collisioni

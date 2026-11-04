@@ -54,7 +54,7 @@ export const WEAPONS: WeaponDef[] = [
   { name: "Disintegratore", mag: 30, damage: 6, fireRate: 0.08, reload: 2.8, spread: 0.015, auto: true, mags: 4, pierce: true },
 ];
 
-export type PerkId = "jugger" | "speed" | "doubletap" | "stamin" | "revive" | "deadshot" | "vulture" | "cherry" | "mule" | "phd" | "widow" | "pop";
+export type PerkId = "jugger" | "speed" | "doubletap" | "stamin" | "revive" | "deadshot" | "vulture" | "cherry" | "mule" | "phd" | "widow" | "pop" | "blood" | "scavenger" | "precision" | "breach" | "timeslip";
 export const PERKS: { id: PerkId; name: string; desc: string; cost: number; color: string }[] = [
   { id: "jugger", name: "Juggernog", desc: "Vita massima 200", cost: 2500, color: "#c2413c" },
   { id: "speed", name: "Speed Cola", desc: "Ricarica 2x più veloce", cost: 3000, color: "#4fa66b" },
@@ -68,6 +68,11 @@ export const PERKS: { id: PerkId; name: string; desc: string; cost: number; colo
   { id: "phd", name: "PhD Flopper", desc: "Danno subito -35%", cost: 2500, color: "#b04fc2" },
   { id: "widow", name: "Widow's Wine", desc: "Zombie vicini rallentati del 50%", cost: 3000, color: "#3a3a52" },
   { id: "pop", name: "Elemental Pop", desc: "Danno dei colpi +25%", cost: 3000, color: "#e8743a" },
+  { id: "blood", name: "Blood Sip", desc: "Ogni uccisione cura 3 vita", cost: 3000, color: "#e05b80" },
+  { id: "scavenger", name: "Scavenger Soda", desc: "Ogni uccisione dà 2 munizioni di riserva", cost: 2500, color: "#91b879" },
+  { id: "precision", name: "Focus Fizz", desc: "Dispersione dei colpi dimezzata", cost: 2000, color: "#72b7c5" },
+  { id: "breach", name: "Piercing Punch", desc: "I proiettili attraversano gli zombie", cost: 4000, color: "#e0a65c" },
+  { id: "timeslip", name: "Time Tonic", desc: "Boost temporanei durano il 50% in più", cost: 3500, color: "#c7cbd8" },
 ];
 
 export type PickupKind = "maxammo" | "instakill" | "double" | "nuke" | "speed";
@@ -227,6 +232,8 @@ export const useGame = create<GameState>((set, get) => ({
       fireRate: s.perks.includes("doubletap") ? up.fireRate * 0.7 : up.fireRate,
       reload: s.perks.includes("speed") ? up.reload * 0.5 : up.reload,
       mag: s.perks.includes("mule") ? Math.round(up.mag * 1.5) : up.mag,
+      spread: s.perks.includes("precision") ? up.spread * 0.5 : up.spread,
+      pierce: up.pierce || s.perks.includes("breach"),
     };
   },
   start: () =>
@@ -279,7 +286,11 @@ export const useGame = create<GameState>((set, get) => ({
   addKill: (points) => {
     let p = world.boost.double > 0 ? points * 2 : points;
     if (get().perks.includes("vulture")) p = Math.round(p * 1.3);
-    set({ kills: get().kills + 1, points: get().points + p, score: get().score + p });
+    const s = get();
+    set({ kills: s.kills + 1, points: s.points + p, score: s.score + p,
+      health: s.perks.includes("blood") && s.health > 0 ? Math.min(s.maxHealth, s.health + 3) : s.health,
+      reserve: s.reserve + (s.perks.includes("scavenger") ? 2 : 0),
+    });
   },
   setRound: (round) => set({ round, roundBanner: 2.5 }),
   setZombiesLeft: (zombiesLeft) => set({ zombiesLeft }),
@@ -304,7 +315,8 @@ export const useGame = create<GameState>((set, get) => ({
   },
   buyPerk: (id) => {
     const s = get();
-    const perk = PERKS.find((p) => p.id === id)!;
+    const perk = PERKS.find((p) => p.id === id);
+    if (!perk) return;
     if (s.perks.includes(id)) return set({ notice: "Perk già attivo" });
     if (s.points < perk.cost) return set({ notice: "Punti insufficienti" });
     const maxHealth = id === "jugger" ? 200 : s.maxHealth;
@@ -343,9 +355,10 @@ export const useGame = create<GameState>((set, get) => ({
     const s = get();
     const w = s.weaponDef();
     if (k === "maxammo") set({ ammo: w.mag, reserve: w.mag * w.mags, reloading: false });
-    if (k === "instakill") world.boost.instakill = 25;
-    if (k === "double") world.boost.double = 30;
-    if (k === "speed") world.boost.speed = 20;
+    const duration = s.perks.includes("timeslip") ? 1.5 : 1;
+    if (k === "instakill") world.boost.instakill = 25 * duration;
+    if (k === "double") world.boost.double = 30 * duration;
+    if (k === "speed") world.boost.speed = 20 * duration;
     if (k === "nuke") {
       let n = 0;
       world.zombies.forEach((z) => {
