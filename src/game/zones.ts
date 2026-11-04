@@ -10,7 +10,9 @@ import * as THREE from "three";
 export const MAP_SCALE = 10;
 /** Ring boundaries (centre square + 4 rings) and how many sector zones each ring has. */
 export const RING_B = [0, 18, 42, 70, 95, 115].map((r) => r * MAP_SCALE);
-export const RING_N = [1, 6, 10, 14, 18];
+export const RING_N = [4, 6, 10, 14, 18];
+/** Open plaza at the very centre: no walls inside this radius, so the spawn stays clear. */
+export const CENTER_OPEN = 3 * MAP_SCALE;
 const RING_OFF = RING_N.map((_, i) => RING_N.slice(0, i).reduce((a, b) => a + b, 0));
 export const ZONE_COUNT = RING_N.reduce((a, b) => a + b, 0);
 export const R_INNER = RING_B[1]!;
@@ -45,8 +47,11 @@ const NAME_POOL = [
   "Prigione", "Fabbrica", "Cattedrale", "Metropolitana",
 ];
 export const ZONE_NAMES = [
-  "Piazza Centrale",
-  ...Array.from({ length: ZONE_COUNT - 1 }, (_, i) => NAME_POOL[i % NAME_POOL.length] + (i >= NAME_POOL.length ? " II" : "")),
+  "Piazza Centrale I",
+  "Piazza Centrale II",
+  "Piazza Centrale III",
+  "Piazza Centrale IV",
+  ...Array.from({ length: ZONE_COUNT - 4 }, (_, i) => NAME_POOL[i % NAME_POOL.length] + (i >= NAME_POOL.length ? " II" : "")),
 ];
 
 const TAU = Math.PI * 2;
@@ -64,7 +69,6 @@ function ringOf(r: number) {
 /** Which zone contains world point (x, z). */
 export function zoneAt(x: number, z: number): number {
   const ring = ringOf(Math.hypot(x, z));
-  if (ring === 0) return 0;
   const n = RING_N[ring]!;
   const sec = Math.min(n - 1, Math.floor(normAng(Math.atan2(z, x)) / (TAU / n)));
   return RING_OFF[ring]! + sec;
@@ -75,7 +79,8 @@ export function nearWall(x: number, z: number, m: number) {
   const r = Math.hypot(x, z);
   for (let i = 1; i < RING_B.length; i++) if (Math.abs(r - RING_B[i]!) < m) return true;
   const ring = ringOf(r);
-  if (ring === 0) return false;
+  // the centre plaza has no radial walls inside CENTER_OPEN
+  if (ring === 0 && r < CENTER_OPEN) return false;
   const span = TAU / RING_N[ring]!;
   const f = (normAng(Math.atan2(z, x)) / span) % 1;
   return Math.min(f, 1 - f) * span * r < m;
@@ -98,19 +103,14 @@ export function randomPointInZone(zone: number, px: number, pz: number, minDist:
   for (let i = 0; i < 12; i++) {
     let x: number;
     let z: number;
-    if (zone === 0) {
-      const a = Math.random() * TAU;
-      const r = 3 + Math.random() * (R_INNER - 6);
-      x = Math.cos(a) * r;
-      z = Math.sin(a) * r;
-    } else {
-      let ring = 1;
+    {
+      let ring = 0;
       while (ring < RING_N.length - 1 && zone >= RING_OFF[ring + 1]!) ring++;
       const idx = zone - RING_OFF[ring]!;
       const span = TAU / RING_N[ring]!;
       const pad = 0.05;
       const a = idx * span + pad + Math.random() * (span - pad * 2);
-      const r0 = RING_B[ring]! + 3;
+      const r0 = (ring === 0 ? CENTER_OPEN : RING_B[ring]!) + 3;
       const r1 = RING_B[ring + 1]! - 3;
       const r = r0 + Math.random() * (r1 - r0);
       x = Math.cos(a) * r;
@@ -176,12 +176,15 @@ function radialWithGate(ang: number, r0: number, r1: number, left: number, right
 }
 
 // --- build geometry (gate ids are stable in this order) ---
-for (let ring = 1; ring < RING_N.length; ring++) {
+for (let ring = 0; ring < RING_N.length; ring++) {
   const n = RING_N[ring]!;
   const off = RING_OFF[ring]!;
   // radial walls between neighbouring sectors of this ring
-  for (let k = 0; k < n; k++) radialWithGate((k * TAU) / n, RING_B[ring]!, RING_B[ring + 1]!, off + ((k + n - 1) % n), off + k);
+  // (the centre ring's walls start at CENTER_OPEN so the spawn plaza stays open)
+  const rInner = ring === 0 ? CENTER_OPEN : RING_B[ring]!;
+  for (let k = 0; k < n; k++) radialWithGate((k * TAU) / n, rInner, RING_B[ring + 1]!, off + ((k + n - 1) % n), off + k);
   // arc wall on the inner edge of this ring, one gate per outer sector
+  if (ring === 0) continue;
   for (let k = 0; k < n; k++) {
     const a0 = (k * TAU) / n;
     const a1 = ((k + 1) * TAU) / n;
