@@ -6,7 +6,8 @@
 
 ## Fatto
 
-- [ ] Aggiungere cinque perk casualmente distribuiti e tre nuovi boss con abilità distinte; verificare effetti e partita.
+- [x] Cinque perk casualmente distribuiti (17 totali) e tre nuovi boss: Predatore, Tempesta, Necromante. Nove test passati; acquisto Blood Sip, apparizione boss e attivazione carica verificati in partita.
+- Verifica completa degli attacchi Tempesta/Necromante e della sincronizzazione multiplayer non conclusa: la prova grafica supera i tempi dell’ambiente disponibile.
 
 - [x] Setup R3F + design system notte urbana cupa
 - [x] Città procedurale (palazzi, lampioni, auto, barili)
