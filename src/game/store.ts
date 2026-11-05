@@ -3,6 +3,7 @@ import { world } from "./world";
 import { gates, ZONE_NAMES, refreshGateCosts } from "./zones";
 import { COST_PAP } from "./uber";
 import { isGuest, queueCommand } from "./network-state";
+import { RARE_WEAPONS, rollBoxWeapon, type WeaponPower } from "./rare-weapons";
 
 export type Phase = "menu" | "playing" | "dead";
 
@@ -20,6 +21,9 @@ export type WeaponDef = {
   pellets?: number;
   /** allows ray to pass through multiple zombies */
   pierce?: boolean;
+  rare?: boolean;
+  power?: WeaponPower;
+  ability?: string;
 };
 
 export const WEAPONS: WeaponDef[] = [
@@ -52,6 +56,7 @@ export const WEAPONS: WeaponDef[] = [
   { name: "Scavenger", mag: 2, damage: 45, fireRate: 1.1, reload: 2.8, spread: 0.003, auto: false, mags: 8, pellets: 3, pierce: true },
   { name: "Wave Gun", mag: 8, damage: 18, fireRate: 0.35, reload: 2.5, spread: 0.05, auto: false, mags: 6, pellets: 5, pierce: true },
   { name: "Disintegratore", mag: 30, damage: 6, fireRate: 0.08, reload: 2.8, spread: 0.015, auto: true, mags: 4, pierce: true },
+  ...RARE_WEAPONS,
 ];
 
 export type PerkId = "jugger" | "speed" | "doubletap" | "stamin" | "revive" | "deadshot" | "vulture" | "cherry" | "mule" | "phd" | "widow" | "pop" | "blood" | "scavenger" | "precision" | "breach" | "timeslip";
@@ -331,15 +336,9 @@ export const useGame = create<GameState>((set, get) => ({
   buyBox: () => {
     const s = get();
     if (s.points < COST_BOX) return set({ notice: "Punti insufficienti" });
-    // random weapon, weighted toward better weapons in later rounds, never the same one
-    let next = s.weapon;
-    let tries = 0;
-    while (next === s.weapon && tries++ < 10) {
-      const bias = Math.min(0.6, s.round * 0.05);
-      const r = Math.pow(Math.random(), 1 - bias);
-      next = Math.min(WEAPONS.length - 1, Math.floor(r * WEAPONS.length));
-    }
-    const w = WEAPONS[next]!;
+    const next = rollBoxWeapon(WEAPONS, s.weapon, s.round);
+    const w = WEAPONS[next];
+    if (!w) return;
     set({
       points: Math.max(0, s.points - COST_BOX),
       weapon: next,

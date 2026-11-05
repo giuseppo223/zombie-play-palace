@@ -17,6 +17,7 @@ import { ubers, feedKill, allUbersCharged, uberCharged, PAP_POS, UBER_RADIUS } f
 import { useGame, type PickupKind, type PerkId } from "./store";
 import { useUi, STATION_POS, BOX_POS, PERK_POSITIONS, type Zone } from "./ui-store";
 import { isGuest, queueCommand } from "./network-state";
+import { planPowerHits } from "./rare-weapons";
 
 const SPEED = 6.4;
 const DROP_CHANCE = 0.045;
@@ -125,6 +126,7 @@ export function Player() {
     const endT = def.pierce ? 70 : hits[0] ? hits[0].t : 70;
     if (tracer) {
       tracer.life = 0.09;
+      tracer.power = def.power;
       tracer.from.set(v.origin.x + v.dir.x * 0.8, 1.35, v.origin.z + v.dir.z * 0.8);
       tracer.to.set(v.origin.x + v.dir.x * endT, 1.35, v.origin.z + v.dir.z * endT);
     }
@@ -133,23 +135,37 @@ export function Player() {
       const z = h.z;
       let dmg = def.damage * (h.head ? (g.perks.includes("deadshot") ? 5 : 2.5) : 1) * (g.perks.includes("pop") ? 1.25 : 1);
       if (world.boost.instakill > 0) dmg = z.boss ? z.maxHp * 0.08 : 999;
-      if (isGuest()) { queueCommand({ kind: 'hit', index: world.zombies.indexOf(z), damage: dmg, head: h.head }); continue; }
-      z.hp -= dmg;
-      z.hitFlash = 1;
-      if (z.hp <= 0) {
-        z.dying = 0.001;
-        if (z.boss) {
+      if (isGuest()) { queueCommand({ kind: 'hit', index: world.zombies.indexOf(z), damage: dmg, head: h.head, weapon: g.weapon }); continue; }
+      const powerHits = planPowerHits(def.power, z, world.zombies, dmg);
+      for (const hit of powerHits) {
+      const victim = hit.zombie;
+      if (!victim.active || victim.dying > 0) continue;
+      victim.hp -= hit.damage;
+      victim.hitFlash = 1;
+      if (def.power === "drain" && g.health > 0) useGame.getState().heal(4);
+      if (def.power === "repulse") {
+        v.tmp.copy(victim.pos).sub(world.playerPos).normalize();
+        victim.pos.addScaledVector(v.tmp, victim.boss ? 0.6 : 3);
+        resolveCollisions(victim.pos, victim.boss ? 0.8 : 0.42);
+      }
+      if (!hit.primary) {
+        const arc = world.tracers.find(t => t.life <= 0);
+        if (arc) { arc.life = 0.09; arc.power = def.power; arc.from.copy(z.pos).setY(1.35); arc.to.copy(victim.pos).setY(1.35); }
+      }
+      if (victim.hp <= 0) {
+        victim.dying = 0.001;
+        if (victim.boss) {
           g.addKill(1500);
           world.shake = 1;
           useGame.setState({ notice: "BOSS ABBATTUTO" });
-          tryDrop(z.pos);
-          tryDrop(z.pos);
+          tryDrop(victim.pos);
+          tryDrop(victim.pos);
         } else {
-          g.addKill(h.head ? 160 : 90);
-          tryDrop(z.pos);
+          g.addKill(h.head && hit.primary ? 160 : 90);
+          tryDrop(victim.pos);
         }
         // souls feed the nearest Überschnalle
-        const u = feedKill(z.pos);
+        const u = feedKill(victim.pos);
         if (u) {
           const g2 = useGame.getState();
           const charged = allUbersCharged();
@@ -160,7 +176,8 @@ export function Player() {
           if (uberCharged(u) && !charged) useGame.setState({ notice: `${u.name} carica!` });
         }
       } else {
-        g.addHit(h.head ? 40 : 15);
+        g.addHit(h.head && hit.primary ? 40 : 15);
+      }
       }
     }
   }

@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { world, MAX_TRACERS, MAX_PICKUPS } from "./world";
 import { STATION_POS, BOX_POS, PERK_POSITIONS } from "./ui-store";
 import { useGame, PERKS } from "./store";
+import { POWER_COLORS } from "./rare-weapons";
 
 const UP = new THREE.Vector3(0, 1, 0);
 
@@ -155,6 +156,7 @@ function Tracer({ index }: { index: number }) {
     m.quaternion.copy(q);
     m.scale.set(1, len, 1);
     (m.material as THREE.MeshBasicMaterial).opacity = Math.max(0, t.life / 0.09) * 0.85;
+    (m.material as THREE.MeshBasicMaterial).color.set(t.power ? POWER_COLORS[t.power] : PICKUP_COLOR.maxammo);
   });
 
   return (

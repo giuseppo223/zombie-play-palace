@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Users, Copy, LogOut } from 'lucide-react';
 import { network, useNetwork, isGuest, type Room, type RemoteState } from './network-state';
-import { world, resetWorld, controlPrefs, type ControlMode } from './world';
-import { useGame, type PickupKind } from './store';
+import { world, resetWorld, resolveCollisions, controlPrefs, type ControlMode } from './world';
+import { useGame, WEAPONS, type PickupKind } from './store';
+import { planPowerHits } from './rare-weapons';
 import { gates, refreshGateCosts } from './zones';
 import { ubers, feedKill, allUbersCharged } from './uber';
 
@@ -89,6 +90,7 @@ export function MultiplayerConnection() {
       if (payload.kind !== 'state' && payload.sender !== r.hostId) return;
       if (payload.kind === 'state' && payload.player?.id !== payload.sender) return;
       if (payload.kind === 'damage' && payload.id === r.id) useGame.getState().damage(Number(payload.amount) || 0);
+      if (payload.kind === 'heal' && payload.id === r.id && useGame.getState().health > 0) useGame.getState().heal(Math.min(4, Math.max(0, Number(payload.amount) || 0)));
       if (payload.kind === 'reward' && payload.id === r.id) { const g = useGame.getState(); if (payload.kill) g.addKill(Number(payload.points)); else g.addHit(Number(payload.points)); }
       if (payload.kind === 'gate-result' && payload.id === r.id) useGame.setState(s => ({ points: Math.max(0, s.points - Number(payload.cost)), notice: 'Cancello aperto' }));
       if (payload.kind === 'pickup-result' && payload.id === r.id) { const g = useGame.getState(); if (payload.pickup !== 'nuke') g.applyPickup(payload.pickup as PickupKind); else g.addHit(400); }
@@ -101,10 +103,25 @@ export function MultiplayerConnection() {
         if (cmd.kind === 'hit') {
           const z = world.zombies[Number(cmd.index)];
           if (!z?.active || z.dying > 0 || Math.hypot(z.pos.x-p.x,z.pos.z-p.z)>75) continue;
-          z.hp -= Math.min(999, Math.max(0, Number(cmd.damage) || 0)); z.hitFlash = 1;
-          const kill = z.hp <= 0;
-          if (kill) { z.dying = 0.001; feedKill(z.pos); useGame.getState().syncUbers(ubers.map(u => u.charge), allUbersCharged()); }
-          send({ kind: 'reward', id: p.id, kill, points: kill ? z.boss ? 1500 : cmd.head ? 160 : 90 : cmd.head ? 40 : 15 });
+          const power = WEAPONS[Number(cmd.weapon)]?.power;
+          const hits = planPowerHits(power, z, world.zombies, Math.min(999, Math.max(0, Number(cmd.damage) || 0)));
+          for (const hit of hits) {
+            const victim = hit.zombie;
+            if (!victim.active || victim.dying > 0) continue;
+            victim.hp -= hit.damage; victim.hitFlash = 1;
+            if (power === 'drain') send({ kind: 'heal', id: p.id, amount: 4 });
+            if (power === 'repulse') {
+              const direction = victim.pos.clone().sub(new THREE.Vector3(p.x, 0, p.z)).normalize();
+              victim.pos.addScaledVector(direction, victim.boss ? 0.6 : 3);
+              resolveCollisions(victim.pos, victim.boss ? 0.8 : 0.42);
+            }
+            const effect = world.tracers.find(t => t.life <= 0);
+            if (effect) { effect.life = 0.09; effect.power = power; effect.from.set(p.x, 1.35, p.z); effect.to.copy(victim.pos).setY(1.35); }
+            const kill = victim.hp <= 0;
+            if (kill) { victim.dying = 0.001; feedKill(victim.pos); useGame.getState().syncUbers(ubers.map(u => u.charge), allUbersCharged()); }
+            const head = cmd.head && hit.primary;
+            send({ kind: 'reward', id: p.id, kill, points: kill ? victim.boss ? 1500 : head ? 160 : 90 : head ? 40 : 15 });
+          }
         }
         if (cmd.kind === 'gate') {
           const gate = gates[Number(cmd.index)]; const cost = gate?.cost ?? 0;

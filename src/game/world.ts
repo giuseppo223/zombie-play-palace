@@ -3,6 +3,7 @@ import { collideWalls, nearGate, nearWall, resetGates, MAP_SCALE, R_OUTER } from
 import { resetUbers } from "./uber";
 import type { BossKind } from "./bosses";
 import type { PerkId } from "./store";
+import type { WeaponPower } from "./rare-weapons";
 
 export type Zombie = {
   active: boolean;
@@ -31,6 +32,7 @@ export type Zombie = {
 
 export type Tracer = {
   life: number;
+  power?: WeaponPower | undefined;
   from: THREE.Vector3;
   to: THREE.Vector3;
 };

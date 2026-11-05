@@ -14,3 +14,4 @@
 - Room admission uses a locked database RPC with expiring capability-token membership so concurrent joins cannot exceed the party limit; table data is not directly public.
 - Boss archetypes are defined in a browser-safe module; the room creator runs their abilities and broadcasts their visual state so co-op guests do not simulate duplicate attacks.
 - Append new courtyard zone and gate ids to the shared layout, and include them in zone lookup, spawning and reachability, to preserve existing co-op identifiers.
+- Keep rare-weapon definitions and hit planning in a browser-safe shared module so solo and creator-resolved guest shots apply the same powers; rare entries use lower mystery-box weights.

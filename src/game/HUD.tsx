@@ -183,8 +183,8 @@ export function HUD() {
               showTouchControls ? "bottom-48" : "bottom-24 sm:bottom-6"
             }`}
           >
-            <div className="font-hud text-sm uppercase tracking-[0.2em] text-muted-foreground">
-              {WEAPONS[g.weapon]?.name}
+            <div className="max-w-56 break-words font-hud text-sm uppercase tracking-[0.2em] text-muted-foreground">
+              {WEAPONS[g.weapon]?.rare && <span className="text-accent">RARA · </span>}{WEAPONS[g.weapon]?.name}
             </div>
             <div className="font-grunge text-2xl leading-tight text-foreground">
               {g.reloading ? "RICARICA" : `${g.ammo} / ${g.reserve}`}
