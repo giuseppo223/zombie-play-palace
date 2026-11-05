@@ -3,18 +3,20 @@ import * as THREE from "three";
 /**
  * The city is split into a central square plus sector zones on concentric
  * rings (see RING_B / RING_N).
- * Every boundary between two zones is a wall with one gate in it. Only some
- * gates can be bought open; the others are welded shut forever.
+ * Every boundary between two zones is a wall with a purchasable gate.
+ * The spawn courtyard is enclosed separately from the surrounding sectors.
  */
 /** Scale factor applied to the whole map layout (distances, not object sizes). */
 export const MAP_SCALE = 10;
 /** Ring boundaries (centre square + 4 rings) and how many sector zones each ring has. */
 export const RING_B = [0, 18, 42, 70, 95, 115].map((r) => r * MAP_SCALE);
 export const RING_N = [4, 6, 10, 14, 18];
-/** Open plaza at the very centre: no walls inside this radius, so the spawn stays clear. */
+/** Enclosed spawn courtyard: its interior stays clear of radial walls. */
 export const CENTER_OPEN = 3 * MAP_SCALE;
 const RING_OFF = RING_N.map((_, i) => RING_N.slice(0, i).reduce((a, b) => a + b, 0));
-export const ZONE_COUNT = RING_N.reduce((a, b) => a + b, 0);
+/** Append the courtyard so existing sector and gate ids stay stable. */
+export const CENTER_ZONE = RING_N.reduce((a, b) => a + b, 0);
+export const ZONE_COUNT = CENTER_ZONE + 1;
 export const R_INNER = RING_B[1]!;
 export const R_OUTER = RING_B[RING_B.length - 1]!;
 export const WALL_H = 3.6;
@@ -51,7 +53,8 @@ export const ZONE_NAMES = [
   "Piazza Centrale II",
   "Piazza Centrale III",
   "Piazza Centrale IV",
-  ...Array.from({ length: ZONE_COUNT - 4 }, (_, i) => NAME_POOL[i % NAME_POOL.length] + (i >= NAME_POOL.length ? " II" : "")),
+  ...Array.from({ length: CENTER_ZONE - 4 }, (_, i) => NAME_POOL[i % NAME_POOL.length] + (i >= NAME_POOL.length ? " II" : "")),
+  "Cortile Centrale",
 ];
 
 const TAU = Math.PI * 2;
@@ -68,6 +71,7 @@ function ringOf(r: number) {
 
 /** Which zone contains world point (x, z). */
 export function zoneAt(x: number, z: number): number {
+  if (Math.hypot(x, z) < CENTER_OPEN) return CENTER_ZONE;
   const ring = ringOf(Math.hypot(x, z));
   const n = RING_N[ring]!;
   const sec = Math.min(n - 1, Math.floor(normAng(Math.atan2(z, x)) / (TAU / n)));
@@ -77,6 +81,7 @@ export function zoneAt(x: number, z: number): number {
 /** True when (x, z) is within `m` of a zone wall line. */
 export function nearWall(x: number, z: number, m: number) {
   const r = Math.hypot(x, z);
+  if (Math.abs(r - CENTER_OPEN) < m) return true;
   for (let i = 1; i < RING_B.length; i++) if (Math.abs(r - RING_B[i]!) < m) return true;
   const ring = ringOf(r);
   // the centre plaza has no radial walls inside CENTER_OPEN
@@ -103,7 +108,12 @@ export function randomPointInZone(zone: number, px: number, pz: number, minDist:
   for (let i = 0; i < 12; i++) {
     let x: number;
     let z: number;
-    {
+    if (zone === CENTER_ZONE) {
+      const a = Math.random() * TAU;
+      const r = Math.sqrt(Math.random()) * (CENTER_OPEN - 3);
+      x = Math.cos(a) * r;
+      z = Math.sin(a) * r;
+    } else {
       let ring = 0;
       while (ring < RING_N.length - 1 && zone >= RING_OFF[ring + 1]!) ring++;
       const idx = zone - RING_OFF[ring]!;
@@ -195,6 +205,12 @@ for (let ring = 0; ring < RING_N.length; ring++) {
   }
 }
 
+// Close the previously open centre with four exits into the surrounding sectors.
+// Append gates after the existing layout to preserve their network ids.
+for (let sector = 0; sector < 4; sector++) {
+  arcWithGate(CENTER_OPEN, sector * TAU / 4, (sector + 1) * TAU / 4, CENTER_ZONE, sector);
+}
+
 /** Every gate opens; each one opened raises the price of the next, up to 10000. */
 export const GATE_COST_MIN = 500;
 export const GATE_COST_MAX = 10000;
@@ -219,8 +235,8 @@ export function resetGates() {
 
 /** Zone ids the player can currently reach from the center. */
 export function reachableZones(): Set<number> {
-  const seen = new Set<number>([0]);
-  const stack = [0];
+  const seen = new Set<number>([CENTER_ZONE]);
+  const stack = [CENTER_ZONE];
   while (stack.length) {
     const z = stack.pop()!;
     for (const g of gates) {

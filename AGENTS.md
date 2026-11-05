@@ -13,3 +13,4 @@
 - Casual co-op uses one capped-rate Realtime channel per room; the creator coordinates zombies, gates and shared progression, while each browser owns its player's inventory and movement.
 - Room admission uses a locked database RPC with expiring capability-token membership so concurrent joins cannot exceed the party limit; table data is not directly public.
 - Boss archetypes are defined in a browser-safe module; the room creator runs their abilities and broadcasts their visual state so co-op guests do not simulate duplicate attacks.
+- Append new courtyard zone and gate ids to the shared layout, and include them in zone lookup, spawning and reachability, to preserve existing co-op identifiers.

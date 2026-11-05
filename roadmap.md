@@ -6,6 +6,7 @@
 
 ## Fatto
 
+- [x] Cortile centrale racchiuso da nuovi muri solidi e quattro cancelli inizialmente chiusi; collisioni e apertura verificati, 11 test passati.
 - [x] Cinque perk casualmente distribuiti (17 totali) e tre nuovi boss: Predatore, Tempesta, Necromante. Nove test passati; acquisto Blood Sip, apparizione boss e attivazione carica verificati in partita.
 - Verifica completa degli attacchi Tempesta/Necromante e della sincronizzazione multiplayer non conclusa: la prova grafica supera i tempi dell’ambiente disponibile.
 
