@@ -197,7 +197,7 @@ export function HUD() {
           {/* Überschnalle charge tracker */}
           <div
             className={`absolute right-4 space-y-1 text-right ${
-              showTouchControls ? "bottom-64" : "bottom-36 sm:bottom-16"
+              showTouchControls ? "bottom-72" : "bottom-44 sm:bottom-24"
             }`}
           >
             <div className="font-hud text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
