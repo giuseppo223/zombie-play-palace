@@ -1,3 +1,4 @@
+import { RoundedGeometry, OrganicGeometry } from "./ModelGeometry";
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
@@ -438,81 +439,84 @@ export function Player() {
       <group ref={body} position={[0, 0.82, 0]}>
         {/* torso / jacket */}
         <mesh position={[0, 0.34, 0]} castShadow>
-          <boxGeometry args={[0.5, 0.62, 0.3]} />
+          <OrganicGeometry args={[0.5, 0.62, 0.3]} />
           <meshStandardMaterial color={JACKET} roughness={0.85} />
         </mesh>
         {/* tactical vest */}
         <mesh position={[0, 0.36, 0.05]} castShadow>
-          <boxGeometry args={[0.44, 0.44, 0.3]} />
+          <RoundedGeometry args={[0.44, 0.44, 0.3]} />
           <meshStandardMaterial color={VEST} roughness={0.95} />
         </mesh>
         {/* vest pouches */}
         {[-0.13, 0, 0.13].map((x) => (
           <mesh key={x} position={[x, 0.25, -0.2]} castShadow>
-            <boxGeometry args={[0.1, 0.12, 0.08]} />
+            <RoundedGeometry args={[0.1, 0.12, 0.08]} />
             <meshStandardMaterial color={STRAP} roughness={0.95} />
           </mesh>
         ))}
         {/* shoulder pads */}
         <mesh position={[-0.31, 0.58, 0]} castShadow>
-          <boxGeometry args={[0.18, 0.12, 0.3]} />
+          <RoundedGeometry args={[0.18, 0.12, 0.3]} />
           <meshStandardMaterial color={JACKET_DARK} roughness={0.9} />
         </mesh>
         <mesh position={[0.31, 0.58, 0]} castShadow>
-          <boxGeometry args={[0.18, 0.12, 0.3]} />
+          <RoundedGeometry args={[0.18, 0.12, 0.3]} />
           <meshStandardMaterial color={JACKET_DARK} roughness={0.9} />
         </mesh>
         {/* belt */}
         <mesh position={[0, 0.02, 0]}>
-          <boxGeometry args={[0.52, 0.08, 0.32]} />
+          <RoundedGeometry args={[0.52, 0.08, 0.32]} />
           <meshStandardMaterial color={STRAP} roughness={0.7} />
         </mesh>
         {/* backpack */}
         <mesh position={[0, 0.32, 0.25]} castShadow>
-          <boxGeometry args={[0.38, 0.46, 0.2]} />
+          <RoundedGeometry args={[0.38, 0.46, 0.2]} />
           <meshStandardMaterial color="#4a3f2f" roughness={0.95} />
         </mesh>
         <mesh position={[0, 0.5, 0.36]} castShadow>
-          <boxGeometry args={[0.3, 0.12, 0.06]} />
+          <RoundedGeometry args={[0.3, 0.12, 0.06]} />
           <meshStandardMaterial color={STRAP} roughness={0.95} />
         </mesh>
 
         {/* head + neck */}
         <group ref={head} position={[0, 0.66, 0]}>
           <mesh position={[0, 0.03, 0]}>
-            <boxGeometry args={[0.14, 0.1, 0.14]} />
+            <OrganicGeometry args={[0.14, 0.1, 0.14]} />
             <meshStandardMaterial color={SKIN} roughness={0.9} />
           </mesh>
           <mesh position={[0, 0.22, 0]} castShadow>
-            <boxGeometry args={[0.28, 0.3, 0.28]} />
+            <OrganicGeometry args={[0.28, 0.3, 0.28]} />
             <meshStandardMaterial color={SKIN} roughness={0.9} />
           </mesh>
           {/* eyes */}
           <mesh position={[-0.06, 0.25, -0.145]}>
-            <boxGeometry args={[0.05, 0.03, 0.01]} />
+            <RoundedGeometry args={[0.05, 0.03, 0.01]} />
             <meshStandardMaterial color="#111" />
           </mesh>
           <mesh position={[0.06, 0.25, -0.145]}>
-            <boxGeometry args={[0.05, 0.03, 0.01]} />
+            <RoundedGeometry args={[0.05, 0.03, 0.01]} />
             <meshStandardMaterial color="#111" />
           </mesh>
           {/* beard stubble */}
           <mesh position={[0, 0.12, -0.12]}>
-            <boxGeometry args={[0.24, 0.1, 0.06]} />
+            <RoundedGeometry args={[0.24, 0.1, 0.06]} />
             <meshStandardMaterial color="#5a4638" roughness={1} />
           </mesh>
           {/* beanie */}
           <mesh position={[0, 0.4, 0.01]} castShadow>
-            <boxGeometry args={[0.32, 0.14, 0.32]} />
+            <OrganicGeometry args={[0.32, 0.14, 0.32]} />
             <meshStandardMaterial color="#5a2a2a" roughness={1} />
           </mesh>
           <mesh position={[0, 0.33, 0.01]}>
-            <boxGeometry args={[0.33, 0.05, 0.33]} />
+            <OrganicGeometry args={[0.33, 0.05, 0.33]} />
             <meshStandardMaterial color="#6f3535" roughness={1} />
           </mesh>
+          {/* nose and ears */}
+          <mesh position={[0, 0.23, -0.16]}><OrganicGeometry args={[0.065, 0.08, 0.08]} /><meshStandardMaterial color={SKIN} /></mesh>
+          {[-0.15, 0.15].map(x => <mesh key={x} position={[x, 0.22, 0]}><OrganicGeometry args={[0.06, 0.1, 0.06]} /><meshStandardMaterial color={SKIN} /></mesh>)}
           {/* headset */}
           <mesh position={[0.15, 0.24, 0]}>
-            <boxGeometry args={[0.04, 0.1, 0.1]} />
+            <RoundedGeometry args={[0.04, 0.1, 0.1]} />
             <meshStandardMaterial color={METAL} roughness={0.5} metalness={0.5} />
           </mesh>
         </group>
@@ -520,16 +524,16 @@ export function Player() {
         {/* right arm (trigger hand) */}
         <group ref={armR} position={[0.32, 0.56, 0]}>
           <mesh position={[0, -0.16, 0]} castShadow>
-            <boxGeometry args={[0.15, 0.34, 0.16]} />
+            <OrganicGeometry args={[0.15, 0.34, 0.16]} />
             <meshStandardMaterial color={JACKET} roughness={0.85} />
           </mesh>
           <group ref={foreR} position={[0, -0.32, 0]}>
             <mesh position={[0, -0.16, 0]} castShadow>
-              <boxGeometry args={[0.13, 0.32, 0.14]} />
+              <OrganicGeometry args={[0.13, 0.32, 0.14]} />
               <meshStandardMaterial color={JACKET_DARK} roughness={0.85} />
             </mesh>
             <mesh position={[0, -0.36, 0]} castShadow>
-              <boxGeometry args={[0.12, 0.12, 0.12]} />
+              <OrganicGeometry args={[0.12, 0.12, 0.12]} />
               <meshStandardMaterial color="#2a2624" roughness={0.9} />
             </mesh>
           </group>
@@ -538,16 +542,16 @@ export function Player() {
         {/* left arm (support hand) */}
         <group ref={armL} position={[-0.32, 0.56, 0]}>
           <mesh position={[0, -0.16, 0]} castShadow>
-            <boxGeometry args={[0.15, 0.34, 0.16]} />
+            <OrganicGeometry args={[0.15, 0.34, 0.16]} />
             <meshStandardMaterial color={JACKET} roughness={0.85} />
           </mesh>
           <group ref={foreL} position={[0, -0.32, 0]}>
             <mesh position={[0, -0.16, 0]} castShadow>
-              <boxGeometry args={[0.13, 0.32, 0.14]} />
+              <OrganicGeometry args={[0.13, 0.32, 0.14]} />
               <meshStandardMaterial color={JACKET_DARK} roughness={0.85} />
             </mesh>
             <mesh position={[0, -0.36, 0]} castShadow>
-              <boxGeometry args={[0.12, 0.12, 0.12]} />
+              <OrganicGeometry args={[0.12, 0.12, 0.12]} />
               <meshStandardMaterial color="#2a2624" roughness={0.9} />
             </mesh>
           </group>
@@ -557,27 +561,27 @@ export function Player() {
       {/* weapon (held in front at chest height) */}
       <group ref={gun} position={[0.2, 1.3, -0.1]}>
         <mesh position={[0, 0, -0.55]} castShadow>
-          <boxGeometry args={[0.09, 0.14, 0.8]} />
+          <RoundedGeometry args={[0.09, 0.14, 0.8]} />
           <meshStandardMaterial color={METAL} roughness={0.4} metalness={0.8} />
         </mesh>
         <mesh position={[0, -0.02, -1.05]} castShadow>
-          <boxGeometry args={[0.05, 0.05, 0.3]} />
+          <RoundedGeometry args={[0.05, 0.05, 0.3]} />
           <meshStandardMaterial color="#0d1013" roughness={0.3} metalness={0.9} />
         </mesh>
         <mesh position={[0, -0.16, -0.5]} castShadow>
-          <boxGeometry args={[0.07, 0.2, 0.09]} />
+          <RoundedGeometry args={[0.07, 0.2, 0.09]} />
           <meshStandardMaterial color="#2a2624" roughness={0.9} />
         </mesh>
         <mesh position={[0, -0.12, -0.28]} castShadow>
-          <boxGeometry args={[0.07, 0.14, 0.08]} />
+          <RoundedGeometry args={[0.07, 0.14, 0.08]} />
           <meshStandardMaterial color="#2a2624" roughness={0.9} />
         </mesh>
         <mesh position={[0, 0.08, -0.12]} castShadow>
-          <boxGeometry args={[0.08, 0.12, 0.3]} />
+          <RoundedGeometry args={[0.08, 0.12, 0.3]} />
           <meshStandardMaterial color="#3a3128" roughness={0.9} />
         </mesh>
         <mesh position={[0, 0.1, -0.6]}>
-          <boxGeometry args={[0.03, 0.05, 0.08]} />
+          <RoundedGeometry args={[0.03, 0.05, 0.08]} />
           <meshStandardMaterial color={METAL} roughness={0.4} metalness={0.8} />
         </mesh>
         <pointLight ref={flash} position={[0, 0, -1.3]} color="#ffd28a" distance={12} decay={2} intensity={0} />
@@ -586,32 +590,32 @@ export function Player() {
       {/* ===== legs: hip -> knee chains ===== */}
       <group ref={hipL} position={[-0.14, 0.82, 0]}>
         <mesh position={[0, -0.2, 0]} castShadow>
-          <boxGeometry args={[0.2, 0.42, 0.22]} />
+          <OrganicGeometry args={[0.2, 0.42, 0.22]} />
           <meshStandardMaterial color={PANTS} roughness={0.95} />
         </mesh>
         <group ref={kneeL} position={[0, -0.4, 0]}>
           <mesh position={[0, -0.18, 0]} castShadow>
-            <boxGeometry args={[0.18, 0.36, 0.2]} />
+            <OrganicGeometry args={[0.18, 0.36, 0.2]} />
             <meshStandardMaterial color={PANTS} roughness={0.95} />
           </mesh>
           <mesh position={[0, -0.38, -0.03]} castShadow>
-            <boxGeometry args={[0.2, 0.1, 0.3]} />
+            <RoundedGeometry args={[0.2, 0.1, 0.3]} />
             <meshStandardMaterial color={BOOT} roughness={0.7} />
           </mesh>
         </group>
       </group>
       <group ref={hipR} position={[0.14, 0.82, 0]}>
         <mesh position={[0, -0.2, 0]} castShadow>
-          <boxGeometry args={[0.2, 0.42, 0.22]} />
+          <OrganicGeometry args={[0.2, 0.42, 0.22]} />
           <meshStandardMaterial color={PANTS} roughness={0.95} />
         </mesh>
         <group ref={kneeR} position={[0, -0.4, 0]}>
           <mesh position={[0, -0.18, 0]} castShadow>
-            <boxGeometry args={[0.18, 0.36, 0.2]} />
+            <OrganicGeometry args={[0.18, 0.36, 0.2]} />
             <meshStandardMaterial color={PANTS} roughness={0.95} />
           </mesh>
           <mesh position={[0, -0.38, -0.03]} castShadow>
-            <boxGeometry args={[0.2, 0.1, 0.3]} />
+            <RoundedGeometry args={[0.2, 0.1, 0.3]} />
             <meshStandardMaterial color={BOOT} roughness={0.7} />
           </mesh>
         </group>

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { buildings, props, ARENA_RADIUS, LAMP_RINGS } from "./world";
 import { MAP_SCALE } from "./zones";
 import { asphaltTexture, facadeTexture } from "./textures";
@@ -54,17 +55,27 @@ export function City() {
   );
 
   const data = useMemo(() => {
-    const box = new THREE.BoxGeometry(1, 1, 1);
-    const cyl = new THREE.CylinderGeometry(1, 1, 1, 10);
+    const box = new RoundedBoxGeometry(1, 1, 1, 1, 0.04);
+    const cyl = new THREE.CylinderGeometry(0.92, 1, 1, 16);
     const pole = new THREE.CylinderGeometry(0.75, 1, 1, 6);
     const byTint: Inst[][] = [[], [], []];
     const parapets: Inst[] = [];
+    const ledges: Inst[] = [];
+    const columns: Inst[] = [];
     buildings.forEach((b) => {
       byTint[Math.floor(b.tint * 3) % 3]!.push({ x: b.x, y: b.h / 2, z: b.z, sx: b.w, sy: b.h, sz: b.d, rot: 0 });
       parapets.push({ x: b.x, y: b.h + 0.25, z: b.z, sx: b.w + 0.5, sy: 0.5, sz: b.d + 0.5, rot: 0 });
+      if (Math.hypot(b.x, b.z) < 150) {
+        for (let y = 3.2; y < b.h; y += 4.5) ledges.push({ x: b.x, y, z: b.z, sx: b.w + 0.25, sy: 0.12, sz: b.d + 0.25, rot: 0 });
+        for (const dx of [-1, 1]) for (const dz of [-1, 1]) columns.push({ x: b.x + dx * (b.w / 2 - 0.12), y: b.h / 2, z: b.z + dz * (b.d / 2 - 0.12), sx: 0.28, sy: b.h, sz: 0.28, rot: 0 });
+      }
     });
     const carBody: Inst[] = [];
     const carTop: Inst[] = [];
+    const wheels: Inst[] = [];
+    const headlights: Inst[] = [];
+    const wheel = new THREE.CylinderGeometry(0.38, 0.38, 0.22, 12);
+    wheel.rotateZ(Math.PI / 2);
     const barrels: Inst[] = [];
     const crates: Inst[] = [];
     props.forEach((p) => {
@@ -73,6 +84,8 @@ export function City() {
         const c = Math.cos(p.rot);
         const s = Math.sin(p.rot);
         carTop.push({ x: p.x - 0.2 * s, y: 1.15, z: p.z - 0.2 * c, sx: 1.7, sy: 0.6, sz: 2, rot: p.rot });
+        for (const dx of [-0.96, 0.96]) for (const dz of [-1.35, 1.35]) wheels.push({ x: p.x + dx * c + dz * s, y: 0.38, z: p.z - dx * s + dz * c, sx: 1, sy: 1, sz: 1, rot: p.rot });
+        for (const dx of [-0.65, 0.65]) headlights.push({ x: p.x + dx * c - 2.2 * s, y: 0.65, z: p.z - dx * s - 2.2 * c, sx: 0.4, sy: 0.16, sz: 0.05, rot: p.rot });
       } else if (p.kind === "barrel") barrels.push({ x: p.x, y: 0.55, z: p.z, sx: 0.45, sy: 1.1, sz: 0.45, rot: 0 });
       else crates.push({ x: p.x, y: 0.45, z: p.z, sx: 0.9, sy: 0.9, sz: 0.9, rot: p.rot });
     });
@@ -98,7 +111,7 @@ export function City() {
       pole: new THREE.MeshStandardMaterial({ color: "#0f1318", roughness: 0.7, metalness: 0.4 }),
       head: new THREE.MeshStandardMaterial({ color: "#e8c07a", emissive: "#e8c07a", emissiveIntensity: 2.4 }),
     };
-    return { box, cyl, pole, byTint, parapets, carBody, carTop, barrels, crates, poles, heads, lit, mats };
+    return { box, cyl, pole, wheel, wheels, headlights, byTint, parapets, ledges, columns, carBody, carTop, barrels, crates, poles, heads, lit, mats };
   }, []);
 
   return (
@@ -119,8 +132,12 @@ export function City() {
         <Instances key={i} items={items} geometry={data.box} material={facadeMats[i]!} shadow />
       ))}
       <Instances items={data.parapets} geometry={data.box} material={data.mats.parapet} />
+      <Instances items={data.ledges} geometry={data.box} material={data.mats.parapet} />
+      <Instances items={data.columns} geometry={data.box} material={data.mats.parapet} />
       <Instances items={data.carBody} geometry={data.box} material={data.mats.carBody} shadow />
       <Instances items={data.carTop} geometry={data.box} material={data.mats.carTop} />
+      <Instances items={data.wheels} geometry={data.wheel} material={data.mats.pole} />
+      <Instances items={data.headlights} geometry={data.box} material={data.mats.parapet} />
       <Instances items={data.barrels} geometry={data.cyl} material={data.mats.barrel} shadow />
       <Instances items={data.crates} geometry={data.box} material={data.mats.crate} shadow />
       <Instances items={data.poles} geometry={data.pole} material={data.mats.pole} />

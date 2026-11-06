@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { City } from "./City";
 import { ZoneWalls } from "./Zones";
@@ -12,6 +12,11 @@ import { controlPrefs, input, world } from "./world";
 import { useGame, PERKS } from "./store";
 import { useUi } from "./ui-store";
 import { MultiplayerConnection, RemotePlayers } from "./Multiplayer";
+
+function SceneReady() {
+  useFrame(({ gl }) => { gl.domElement.parentElement?.setAttribute("data-scene-ready", "true"); });
+  return null;
+}
 
 function useInputBindings() {
   useEffect(() => {
@@ -132,6 +137,7 @@ export function GameCanvas() {
           <RemotePlayers />
           <ZombieSystem />
           <Tracers />
+          <SceneReady />
         </Canvas>
       </div>
       <HUD />

@@ -1,3 +1,4 @@
+import { RoundedGeometry, OrganicGeometry } from "./ModelGeometry";
 import { useEffect, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -188,13 +189,13 @@ function RemotePlayer({ id }: { id: string }) {
     if (left.current) left.current.rotation.x=swing; if (right.current) right.current.rotation.x=-swing;
   });
   return <group ref={group} visible={false} name={`teammate-${id}`}>
-    <mesh position={[0,1.15,0]} castShadow><boxGeometry args={[.65,.75,.35]} /><meshStandardMaterial color="#33413a" /></mesh>
+    <mesh position={[0,1.15,0]} castShadow><OrganicGeometry args={[.65,.75,.35]} /><meshStandardMaterial color="#33413a" /></mesh>
     <mesh position={[0,1.72,0]} castShadow><sphereGeometry args={[.23,10,8]} /><meshStandardMaterial color="#c9a98a" /></mesh>
-    <mesh position={[0,1.91,0]}><boxGeometry args={[.48,.12,.4]} /><meshStandardMaterial color="#26302b" /></mesh>
-    <mesh position={[0,1.15,-.21]}><boxGeometry args={[.5,.55,.13]} /><meshStandardMaterial color="#3d3427" /></mesh>
-    {([-1,1] as const).map(side => <group key={side} position={[side*.19,.78,0]} ref={side===-1?left:right}><mesh position={[0,-.32,0]} castShadow><boxGeometry args={[.23,.7,.25]} /><meshStandardMaterial color="#242a30" /></mesh><mesh position={[0,-.7,-.07]}><boxGeometry args={[.27,.17,.4]} /><meshStandardMaterial color="#15181b" /></mesh></group>)}
-    <mesh position={[.32,1.25,-.26]} rotation-x={-1.25}><boxGeometry args={[.19,.65,.2]} /><meshStandardMaterial color="#33413a" /></mesh>
-    <mesh position={[.25,1.32,-.65]}><boxGeometry args={[.14,.15,.7]} /><meshStandardMaterial color="#14181c" /></mesh>
+    <mesh position={[0,1.91,0]}><RoundedGeometry args={[.48,.12,.4]} /><meshStandardMaterial color="#26302b" /></mesh>
+    <mesh position={[0,1.15,-.21]}><RoundedGeometry args={[.5,.55,.13]} /><meshStandardMaterial color="#3d3427" /></mesh>
+    {([-1,1] as const).map(side => <group key={side} position={[side*.19,.78,0]} ref={side===-1?left:right}><mesh position={[0,-.32,0]} castShadow><OrganicGeometry args={[.23,.7,.25]} /><meshStandardMaterial color="#242a30" /></mesh><mesh position={[0,-.7,-.07]}><RoundedGeometry args={[.27,.17,.4]} /><meshStandardMaterial color="#15181b" /></mesh></group>)}
+    <mesh position={[.32,1.25,-.26]} rotation-x={-1.25}><RoundedGeometry args={[.19,.65,.2]} /><meshStandardMaterial color="#33413a" /></mesh>
+    <mesh position={[.25,1.32,-.65]}><RoundedGeometry args={[.14,.15,.7]} /><meshStandardMaterial color="#14181c" /></mesh>
   </group>;
 }
 export function RemotePlayers() {

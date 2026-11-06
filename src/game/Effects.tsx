@@ -5,6 +5,7 @@ import { world, MAX_TRACERS, MAX_PICKUPS } from "./world";
 import { STATION_POS, BOX_POS, PERK_POSITIONS } from "./ui-store";
 import { useGame, PERKS } from "./store";
 import { POWER_COLORS } from "./rare-weapons";
+import { Environment, Lightformer } from "@react-three/drei";
 
 const UP = new THREE.Vector3(0, 1, 0);
 
@@ -236,27 +237,31 @@ export function Atmosphere() {
       l.intensity = 1.6;
       next.current = 5 + Math.random() * 9;
     }
-    l.intensity = THREE.MathUtils.lerp(l.intensity, 0.22, 1 - Math.exp(-6 * delta));
+    l.intensity = THREE.MathUtils.lerp(l.intensity, 0.7, 1 - Math.exp(-6 * delta));
   });
 
   const round = useGame((s) => s.round);
 
   return (
     <>
-      <hemisphereLight args={["#28313f", "#0a0c10", 0.5]} />
-      <ambientLight intensity={0.18} color="#2a3546" />
+      <Environment resolution={64}>
+        <Lightformer intensity={1.5} color="#b5cadb" position={[0, 15, 0]} rotation-x={Math.PI / 2} scale={[30, 30, 1]} />
+        <Lightformer intensity={1} color="#f0cc9b" position={[-10, 6, 2]} rotation-y={Math.PI / 2} scale={[12, 8, 1]} />
+      </Environment>
+      <hemisphereLight args={["#b3c9df", "#333d36", 0.85]} />
+      <ambientLight intensity={0.25} color="#b5c4d0" />
       <directionalLight
         ref={light}
         position={[-30, 40, -20]}
-        intensity={0.22}
+        intensity={0.7}
         color="#9fb6d4"
         castShadow
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
-        shadow-camera-left={-100}
-        shadow-camera-right={100}
-        shadow-camera-top={100}
-        shadow-camera-bottom={-100}
+        shadow-camera-left={-35}
+        shadow-camera-right={35}
+        shadow-camera-top={35}
+        shadow-camera-bottom={-35}
         shadow-camera-far={220}
       />
       {/* blood moon grows redder as rounds go up */}

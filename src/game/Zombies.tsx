@@ -1,3 +1,4 @@
+import { RoundedGeometry, OrganicGeometry } from "./ModelGeometry";
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
@@ -111,36 +112,38 @@ function ZombieMesh({ index }: { index: number }) {
       <group ref={normal}>
         <group ref={torso} position={[0, 0.85, 0]}>
           <mesh position={[0, 0.22, 0]} castShadow>
-            <boxGeometry args={[0.52, 0.7, 0.3]} />
+            <OrganicGeometry args={[0.52, 0.7, 0.3]} />
             <meshStandardMaterial color={CLOTH} roughness={0.95} />
           </mesh>
           <mesh position={[0, 0.78, 0.02]} castShadow>
-            <boxGeometry args={[0.28, 0.32, 0.28]} />
+            <OrganicGeometry args={[0.28, 0.32, 0.28]} />
             <meshStandardMaterial color={SKIN} roughness={0.9} />
           </mesh>
+          {[-0.075, 0.075].map(x => <mesh key={x} position={[x, 0.84, 0.155]}><sphereGeometry args={[0.028, 8, 6]} /><meshBasicMaterial color="#df8b71" /></mesh>)}
+          <mesh position={[0, 0.75, 0.165]}><OrganicGeometry args={[0.065, 0.1, 0.055]} /><meshStandardMaterial color={SKIN} /></mesh>
           <mesh position={[0, 0.79, 0.17]}>
-            <boxGeometry args={[0.2, 0.06, 0.02]} />
+            <RoundedGeometry args={[0.2, 0.06, 0.02]} />
             <meshStandardMaterial color="#c2413c" emissive="#c2413c" emissiveIntensity={1.6} toneMapped={false} />
           </mesh>
           <group ref={armL} position={[-0.34, 0.42, 0]}>
             <mesh position={[0, 0, 0.34]} castShadow>
-              <boxGeometry args={[0.15, 0.15, 0.72]} />
+              <OrganicGeometry args={[0.15, 0.15, 0.72]} />
               <meshStandardMaterial color={SKIN} roughness={0.9} />
             </mesh>
           </group>
           <group ref={armR} position={[0.34, 0.42, 0]}>
             <mesh position={[0, 0, 0.34]} castShadow>
-              <boxGeometry args={[0.15, 0.15, 0.72]} />
+              <OrganicGeometry args={[0.15, 0.15, 0.72]} />
               <meshStandardMaterial color={CLOTH2} roughness={0.9} />
             </mesh>
           </group>
         </group>
         <mesh ref={legL} position={[-0.14, 0.44, 0]} castShadow>
-          <boxGeometry args={[0.18, 0.88, 0.2]} />
+          <OrganicGeometry args={[0.18, 0.88, 0.2]} />
           <meshStandardMaterial color="#22262c" roughness={0.95} />
         </mesh>
         <mesh ref={legR} position={[0.14, 0.44, 0]} castShadow>
-          <boxGeometry args={[0.18, 0.88, 0.2]} />
+          <OrganicGeometry args={[0.18, 0.88, 0.2]} />
           <meshStandardMaterial color="#22262c" roughness={0.95} />
         </mesh>
       </group>
@@ -150,21 +153,21 @@ function ZombieMesh({ index }: { index: number }) {
         <group ref={bossBody} position={[0, 0.9, 0]}>
           {/* massive torso */}
           <mesh position={[0, 0.3, 0]} castShadow>
-            <boxGeometry args={[0.95, 0.9, 0.55]} />
+            <OrganicGeometry args={[0.95, 0.9, 0.55]} />
             <meshStandardMaterial color={BOSS_SKIN} roughness={0.9} />
           </mesh>
           {/* chest armor plates */}
           <mesh position={[0, 0.3, 0.29]} castShadow>
-            <boxGeometry args={[0.7, 0.6, 0.06]} />
+            <RoundedGeometry args={[0.7, 0.6, 0.06]} />
             <meshStandardMaterial color={BOSS_CLOTH} roughness={0.6} metalness={0.4} />
           </mesh>
           {/* shoulders */}
           <mesh position={[-0.6, 0.65, 0]} castShadow>
-            <boxGeometry args={[0.35, 0.3, 0.45]} />
+            <RoundedGeometry args={[0.35, 0.3, 0.45]} />
             <meshStandardMaterial color={BOSS_CLOTH} roughness={0.7} metalness={0.3} />
           </mesh>
           <mesh position={[0.6, 0.65, 0]} castShadow>
-            <boxGeometry args={[0.35, 0.3, 0.45]} />
+            <RoundedGeometry args={[0.35, 0.3, 0.45]} />
             <meshStandardMaterial color={BOSS_CLOTH} roughness={0.7} metalness={0.3} />
           </mesh>
           {/* spikes */}
@@ -176,16 +179,16 @@ function ZombieMesh({ index }: { index: number }) {
           ))}
           {/* small sunken head */}
           <mesh position={[0, 0.9, 0.12]} castShadow>
-            <boxGeometry args={[0.32, 0.34, 0.32]} />
+            <OrganicGeometry args={[0.32, 0.34, 0.32]} />
             <meshStandardMaterial color={BOSS_SKIN} roughness={0.9} />
           </mesh>
           <mesh position={[0, 0.92, 0.29]}>
-            <boxGeometry args={[0.24, 0.07, 0.02]} />
+            <RoundedGeometry args={[0.24, 0.07, 0.02]} />
             <meshStandardMaterial color="#ff5a3c" emissive="#ff5a3c" emissiveIntensity={3} toneMapped={false} />
           </mesh>
           {/* glowing core */}
           <mesh position={[0, 0.25, 0.33]}>
-            <boxGeometry args={[0.18, 0.18, 0.04]} />
+            <RoundedGeometry args={[0.18, 0.18, 0.04]} />
             <meshStandardMaterial ref={core} color={BOSS_DEFS.brute.color} emissive={BOSS_DEFS.brute.color} emissiveIntensity={4} toneMapped={false} />
           </mesh>
           <group ref={claws} visible={false}>
@@ -201,32 +204,32 @@ function ZombieMesh({ index }: { index: number }) {
           {/* huge arms */}
           <group ref={bossArmL} position={[-0.62, 0.5, 0]}>
             <mesh position={[0, -0.05, 0.4]} castShadow>
-              <boxGeometry args={[0.3, 0.3, 0.9]} />
+              <OrganicGeometry args={[0.3, 0.3, 0.9]} />
               <meshStandardMaterial color={BOSS_SKIN} roughness={0.9} />
             </mesh>
             <mesh position={[0, -0.08, 0.9]} castShadow>
-              <boxGeometry args={[0.36, 0.36, 0.3]} />
+              <OrganicGeometry args={[0.36, 0.36, 0.3]} />
               <meshStandardMaterial color="#3a4434" roughness={0.9} />
             </mesh>
           </group>
           <group ref={bossArmR} position={[0.62, 0.5, 0]}>
             <mesh position={[0, -0.05, 0.4]} castShadow>
-              <boxGeometry args={[0.3, 0.3, 0.9]} />
+              <OrganicGeometry args={[0.3, 0.3, 0.9]} />
               <meshStandardMaterial color={BOSS_SKIN} roughness={0.9} />
             </mesh>
             <mesh position={[0, -0.08, 0.9]} castShadow>
-              <boxGeometry args={[0.36, 0.36, 0.3]} />
+              <OrganicGeometry args={[0.36, 0.36, 0.3]} />
               <meshStandardMaterial color="#3a4434" roughness={0.9} />
             </mesh>
           </group>
         </group>
         {/* legs */}
         <mesh ref={bossLegL} position={[-0.28, 0.5, 0]} castShadow>
-          <boxGeometry args={[0.32, 1, 0.34]} />
+          <OrganicGeometry args={[0.32, 1, 0.34]} />
           <meshStandardMaterial color={BOSS_CLOTH} roughness={0.95} />
         </mesh>
         <mesh ref={bossLegR} position={[0.28, 0.5, 0]} castShadow>
-          <boxGeometry args={[0.32, 1, 0.34]} />
+          <OrganicGeometry args={[0.32, 1, 0.34]} />
           <meshStandardMaterial color={BOSS_CLOTH} roughness={0.95} />
         </mesh>
       </group>

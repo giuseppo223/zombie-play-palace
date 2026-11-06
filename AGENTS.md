@@ -15,3 +15,5 @@
 - Boss archetypes are defined in a browser-safe module; the room creator runs their abilities and broadcasts their visual state so co-op guests do not simulate duplicate attacks.
 - Append new courtyard zone and gate ids to the shared layout, and include them in zone lookup, spawning and reachability, to preserve existing co-op identifiers.
 - Keep rare-weapon definitions and hit planning in a browser-safe shared module so solo and creator-resolved guest shots apply the same powers; rare entries use lower mystery-box weights.
+- Use shared organic and rounded geometry for procedural character bodies and equipment when CC0 model downloads are unavailable; keep physics unchanged and repeated city detail instanced.
+- Mark the canvas parent with data-scene-ready from its frame callback so graphics verification waits for a rendered scene.

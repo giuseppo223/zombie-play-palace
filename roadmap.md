@@ -6,6 +6,7 @@
 
 ## Fatto
 
+- [x] Grafica meno cubica: corpi e volti arrotondati per personaggio/zombie/boss, auto con ruote, facciate dettagliate e illuminazione migliorata. Schermate desktop e orizzontale verificate senza errori, 16 test passati. Modelli CC0 esterni non scaricabili; fluidità su telefono reale non misurata.
 - [x] Cinque armi rare nella cassa con fulmine a catena, esplosione, cura, respinta ed esecuzione: tutti i poteri verificati in partita singola, 16 test passati. Prova multiplayer dei nuovi poteri non conclusa.
 - [x] Cortile centrale racchiuso da nuovi muri solidi e quattro cancelli inizialmente chiusi; collisioni e apertura verificati, 11 test passati.
 - [x] Cinque perk casualmente distribuiti (17 totali) e tre nuovi boss: Predatore, Tempesta, Necromante. Nove test passati; acquisto Blood Sip, apparizione boss e attivazione carica verificati in partita.
